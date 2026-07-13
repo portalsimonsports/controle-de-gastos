@@ -13,7 +13,7 @@
 <body>
   <div class="carregando">Carregando…</div>
   <script>
-    fetch('./app.html?v=2026071301', {cache:'no-store'})
+    fetch('./app.html?v=2026071302', {cache:'no-store'})
       .then(function(resposta){
         if(!resposta.ok) throw new Error('Falha ao carregar o sistema.');
         return resposta.text();
@@ -21,6 +21,10 @@
       .then(function(html){
         html = html.replace(
           /\s*<p>\s*Página pública de acesso ao sistema\. Os dados financeiros permanecem privados e somente são\s*carregados após a validação do e-mail cadastrado e do código temporário enviado por mensagem\.\s*<\/p>/i,
+          ''
+        );
+        html = html.replace(
+          /\s*<p class="muted small">\s*O e-mail precisa constar na aba\s*<strong>GERENCIAMENTO<\/strong>\.\s*<\/p>/i,
           ''
         );
         document.open();
