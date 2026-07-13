@@ -13,7 +13,7 @@
 <body>
   <div class="carregando">Carregando…</div>
   <script>
-    fetch('./app.html?v=2026071302', {cache:'no-store'})
+    fetch('./app.html?v=202607131620', {cache:'no-store'})
       .then(function(resposta){
         if(!resposta.ok) throw new Error('Falha ao carregar o sistema.');
         return resposta.text();
@@ -27,6 +27,55 @@
           /\s*<p class="muted small">\s*O e-mail precisa constar na aba\s*<strong>GERENCIAMENTO<\/strong>\.\s*<\/p>/i,
           ''
         );
+        html = html.replace(
+          /\s*<p class="muted small">\s*O backend grava somente as colunas A:H da aba Despesas\.\s*<\/p>/i,
+          ''
+        );
+
+        const ajusteGravacao = `<script>
+          (function(){
+            const botao = document.getElementById('saveExpense');
+            if (!botao) return;
+
+            botao.addEventListener('click', async function(event){
+              event.preventDefault();
+              event.stopImmediatePropagation();
+
+              const params = {
+                token: state.token,
+                data: document.getElementById('expenseDate').value,
+                descricao: document.getElementById('expenseDescription').value,
+                valorTotal: document.getElementById('expenseValue').value,
+                refCartao: document.getElementById('expenseCard').value,
+                nParcelas: document.getElementById('expenseInstallments').value,
+                divididoSN: document.getElementById('expenseDivided').value,
+                modoData: document.getElementById('expenseMode').value
+              };
+
+              if (!params.data || !params.descricao.trim() || Number(params.valorTotal) <= 0 || !params.refCartao) {
+                toast('Preencha data, descrição, valor e cartão.', 'error');
+                return;
+              }
+
+              const textoOriginal = botao.textContent;
+              botao.disabled = true;
+              botao.textContent = 'Gravando...';
+
+              try {
+                const resultado = await call('saveDespesa', params, false);
+                toast(resultado.msg || 'Despesa gravada.');
+                clearExpense();
+              } catch (erro) {
+                toast(erro.message, 'error');
+              } finally {
+                botao.disabled = false;
+                botao.textContent = textoOriginal;
+              }
+            }, true);
+          })();
+        <\/script>`;
+
+        html = html.replace('</body>', ajusteGravacao + '</body>');
         document.open();
         document.write(html);
         document.close();
