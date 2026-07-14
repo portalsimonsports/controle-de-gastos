@@ -1,18 +1,20 @@
 'use strict';
 
 (function () {
+  let updateQueued = false;
+
   function hideIrrelevantStatus() {
     const busInfo = document.getElementById('busInfo');
     const fidelityStatus = document.getElementById('fidelityStatus');
 
     if (busInfo) {
-      busInfo.hidden = true;
-      busInfo.textContent = '';
+      if (!busInfo.hidden) busInfo.hidden = true;
+      if (busInfo.textContent) busInfo.textContent = '';
     }
 
     if (fidelityStatus) {
-      fidelityStatus.hidden = true;
-      fidelityStatus.textContent = '';
+      if (!fidelityStatus.hidden) fidelityStatus.hidden = true;
+      if (fidelityStatus.textContent) fidelityStatus.textContent = '';
     }
   }
 
@@ -22,7 +24,12 @@
       if (!table) return;
 
       const firstHeader = table.querySelector('thead th:first-child');
-      if (firstHeader) firstHeader.textContent = 'Data e hora';
+      if (
+        firstHeader &&
+        firstHeader.textContent !== 'Data e hora'
+      ) {
+        firstHeader.textContent = 'Data e hora';
+      }
     });
   }
 
@@ -42,24 +49,41 @@
     updateTableHeaders();
   }
 
-  const observer = new MutationObserver(function () {
+  function queueFixes() {
+    if (updateQueued) return;
+    updateQueued = true;
+
+    requestAnimationFrame(function () {
+      updateQueued = false;
+      applyFixes();
+    });
+  }
+
+  function start() {
     applyFixes();
-  });
+    setTimeout(keepActiveMenuVisible, 0);
 
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true
-  });
+    const observer = new MutationObserver(queueFixes);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
 
-  document.addEventListener('click', function (event) {
-    if (event.target.closest('.tab')) {
-      setTimeout(function () {
-        applyFixes();
-        keepActiveMenuVisible();
-      }, 0);
-    }
-  });
+    document.addEventListener('click', function (event) {
+      if (event.target.closest('.tab')) {
+        setTimeout(function () {
+          applyFixes();
+          keepActiveMenuVisible();
+        }, 0);
+      }
+    });
+  }
 
-  applyFixes();
-  setTimeout(keepActiveMenuVisible, 0);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, {
+      once: true
+    });
+  } else {
+    start();
+  }
 })();
