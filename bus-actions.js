@@ -75,7 +75,8 @@
       headerRow.innerHTML = [
         '<th>Data</th>',
         '<th>Tipo</th>',
-        '<th class="right">Quantidade</th>',
+        '<th class="right">Total</th>',
+        '<th class="right">Hora</th>',
         '<th class="right">Valor unitário</th>',
         '<th class="right">Recarga</th>',
         '<th class="right">Ações</th>'
@@ -94,7 +95,7 @@
     if (!rows.length) {
       emptyRow(
         body,
-        6,
+        7,
         'Nenhum lançamento localizado.'
       );
       return;
@@ -111,6 +112,11 @@
         item.quantidade === undefined
           ? '—'
           : String(item.quantidade),
+        'right'
+      );
+      appendCell(
+        row,
+        item.hora || '—',
         'right'
       );
       appendCell(
@@ -167,23 +173,13 @@
     });
   }
 
-  function paintBusHistoryInfo(result) {
+  function paintBusHistoryInfo() {
     const info = document.getElementById('busInfo');
 
     if (!info) return;
 
-    const visible = Array.isArray(result.rows)
-      ? result.rows.length
-      : 0;
-
-    const total = Number(result.totalRegistros || 0);
-
-    info.textContent =
-      'Exibindo ' +
-      visible +
-      ' dos ' +
-      total +
-      ' lançamento(s) mais recentes, em ordem crescente.';
+    info.textContent = '';
+    info.hidden = true;
   }
 
   async function loadLastTenBus() {
