@@ -7,15 +7,19 @@
   <title>Controle de Gastos</title>
   <style>
     html,body{height:100%;margin:0;background:#0c1422;color:#eef4ff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-    body{display:grid;place-items:center}.carregando{padding:16px 20px;border:1px solid #263754;border-radius:14px;background:#121d30}
+    body{display:grid;place-items:center}
+    .carregando{padding:16px 20px;border:1px solid #263754;border-radius:14px;background:#121d30}
   </style>
 </head>
 <body>
   <div class="carregando">Carregando…</div>
+
   <script>
-    fetch('./app.html?v=202607131620', {cache:'no-store'})
+    fetch('./app.html?v=202607140930', {cache:'no-store'})
       .then(function(resposta){
-        if(!resposta.ok) throw new Error('Falha ao carregar o sistema.');
+        if(!resposta.ok){
+          throw new Error('Falha ao carregar o sistema.');
+        }
         return resposta.text();
       })
       .then(function(html){
@@ -23,65 +27,36 @@
           /\s*<p>\s*Página pública de acesso ao sistema\. Os dados financeiros permanecem privados e somente são\s*carregados após a validação do e-mail cadastrado e do código temporário enviado por mensagem\.\s*<\/p>/i,
           ''
         );
+
         html = html.replace(
           /\s*<p class="muted small">\s*O e-mail precisa constar na aba\s*<strong>GERENCIAMENTO<\/strong>\.\s*<\/p>/i,
           ''
         );
+
         html = html.replace(
           /\s*<p class="muted small">\s*O backend grava somente as colunas A:H da aba Despesas\.\s*<\/p>/i,
           ''
         );
 
-        const ajusteGravacao = `<script>
-          (function(){
-            const botao = document.getElementById('saveExpense');
-            if (!botao) return;
+        html = html.replace(
+          '</head>',
+          '<link rel="stylesheet" href="./enhancements.css?v=202607140930">' +
+          '</head>'
+        );
 
-            botao.addEventListener('click', async function(event){
-              event.preventDefault();
-              event.stopImmediatePropagation();
+        html = html.replace(
+          '</body>',
+          '<script src="./enhancements.js?v=202607140930"><\/script>' +
+          '</body>'
+        );
 
-              const params = {
-                token: state.token,
-                data: document.getElementById('expenseDate').value,
-                descricao: document.getElementById('expenseDescription').value,
-                valorTotal: document.getElementById('expenseValue').value,
-                refCartao: document.getElementById('expenseCard').value,
-                nParcelas: document.getElementById('expenseInstallments').value,
-                divididoSN: document.getElementById('expenseDivided').value,
-                modoData: document.getElementById('expenseMode').value
-              };
-
-              if (!params.data || !params.descricao.trim() || Number(params.valorTotal) <= 0 || !params.refCartao) {
-                toast('Preencha data, descrição, valor e cartão.', 'error');
-                return;
-              }
-
-              const textoOriginal = botao.textContent;
-              botao.disabled = true;
-              botao.textContent = 'Gravando...';
-
-              try {
-                const resultado = await call('saveDespesa', params, false);
-                toast(resultado.msg || 'Despesa gravada.');
-                clearExpense();
-              } catch (erro) {
-                toast(erro.message, 'error');
-              } finally {
-                botao.disabled = false;
-                botao.textContent = textoOriginal;
-              }
-            }, true);
-          })();
-        <\/script>`;
-
-        html = html.replace('</body>', ajusteGravacao + '</body>');
         document.open();
         document.write(html);
         document.close();
       })
       .catch(function(erro){
-        document.querySelector('.carregando').textContent = erro.message;
+        document.querySelector('.carregando').textContent =
+          erro.message;
       });
   </script>
 </body>
