@@ -1,17 +1,34 @@
-/* Menus sempre em uma única linha, com rolagem horizontal se necessário. */
+/* Página ampliada para acomodar todos os menus em uma única linha. */
+.shell {
+  width: min(1520px, calc(100% - 24px)) !important;
+}
+
+/* Menus sempre em uma única linha. Em telas menores, permite deslizar sem exibir barra. */
 .tabs {
+  display: flex;
   flex-wrap: nowrap !important;
   overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
-  padding-bottom: 4px;
-  scrollbar-width: thin;
+  gap: 7px;
+  padding-bottom: 2px;
+  scrollbar-width: none;
   overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .tabs .tab {
   flex: 0 0 auto;
+  min-height: 39px;
+  padding: 8px 11px;
   white-space: nowrap;
+  font-size: .88rem;
 }
 
 /* Colunas uniformes e todo o conteúdo centralizado sob os títulos. */
@@ -53,6 +70,16 @@
 #viewBus > .grid,
 .fidelity-panel {
   align-items: end;
+}
+
+@media (max-width: 1100px) {
+  .shell {
+    width: min(100% - 16px, 1520px) !important;
+  }
+
+  .tabs .tab {
+    padding-inline: 10px;
+  }
 }
 
 @media (max-width: 700px) {
