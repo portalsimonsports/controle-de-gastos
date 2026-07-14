@@ -7,8 +7,16 @@
     return state.role === 'admin' || state.role === 'editor';
   }
 
+  function moneyOrDash(value) {
+    return value === null || value === undefined || value === ''
+      ? '—'
+      : money(value);
+  }
+
   function ensureTab() {
-    if (!tabs.some(function (tab) { return tab.id === VIEW_ID; })) {
+    if (!tabs.some(function (tab) {
+      return tab.id === VIEW_ID;
+    })) {
       tabs.push({
         id: VIEW_ID,
         label: 'Bilhete Fidelidade',
@@ -19,6 +27,7 @@
 
   function ensureView() {
     const privateView = document.getElementById('privateView');
+
     if (!privateView) return null;
 
     let view = document.getElementById(VIEW_ID);
@@ -43,9 +52,33 @@
         '<button type="button" class="btn ghost" ',
         'id="clearFidelityUse">Limpar</button>',
         '</div>',
+        '<div class="fidelity-field">',
+        '<label for="fidelityRecharge">Valor da recarga</label>',
+        '<input type="number" min="0.01" step="0.01" ',
+        'id="fidelityRecharge" inputmode="decimal">',
+        '</div>',
+        '<div class="fidelity-actions">',
+        '<button type="button" class="btn primary" ',
+        'id="registerFidelityRecharge">Registrar recarga</button>',
+        '</div>',
         '</div>',
         '<div class="fidelity-status" id="fidelityStatus">',
-        'Carregando informações…',
+        'Carregando lançamentos…',
+        '</div>',
+        '<h4 class="passage-history-title">',
+        'Últimos 10 lançamentos',
+        '</h4>',
+        '<div class="table-wrap">',
+        '<table>',
+        '<thead><tr>',
+        '<th>Data</th>',
+        '<th>Tipo</th>',
+        '<th class="right">Quantidade</th>',
+        '<th class="right">Valor unitário</th>',
+        '<th class="right">Recarga</th>',
+        '</tr></thead>',
+        '<tbody id="fidelityHistoryBody"></tbody>',
+        '</table>',
         '</div>'
       ].join('');
 
@@ -58,90 +91,129 @@
       document
         .getElementById('clearFidelityUse')
         .addEventListener('click', function () {
-          document.getElementById('fidelityQuantity').value = '1';
+          document.getElementById(
+            'fidelityQuantity'
+          ).value = '1';
         });
+
+      document
+        .getElementById('registerFidelityRecharge')
+        .addEventListener('click', registerFidelityRecharge);
     }
 
     return view;
   }
 
-  function adjustBilheteUnicoQuantity() {
-    const input = document.getElementById('busQuantity');
-    if (!input) return;
-
-    input.min = '0';
-    input.max = '999';
-    input.step = '1';
-
-    if (input.value === '') {
-      input.value = '1';
-    }
-
-    const label = document.querySelector(
-      'label[for="busQuantity"]'
+  function renderHistory(result) {
+    const body = document.getElementById(
+      'fidelityHistoryBody'
     );
 
-    if (label) {
-      label.textContent = 'Quantidade de passagens';
-    }
-  }
+    const rows = Array.isArray(result.rows)
+      ? result.rows
+      : [];
 
-  function paintFidelityInfo(result) {
-    const status = document.getElementById('fidelityStatus');
-    if (!status) return;
+    body.innerHTML = '';
 
-    const last = result && result.ultimo
-      ? result.ultimo
-      : null;
-
-    const total = Number(
-      result && result.totalRegistros
-        ? result.totalRegistros
-        : 0
-    );
-
-    if (!last) {
-      status.innerHTML = [
-        '<strong>Nenhum lançamento localizado.</strong>',
-        '<span>O primeiro registro será inserido na primeira célula vazia da coluna C.</span>'
-      ].join('');
+    if (!rows.length) {
+      emptyRow(
+        body,
+        5,
+        'Nenhum lançamento localizado.'
+      );
       return;
     }
 
+    rows.forEach(function (item) {
+      const row = document.createElement('tr');
+
+      appendCell(row, item.data || '—');
+      appendCell(row, item.tipo || '—');
+      appendCell(
+        row,
+        item.quantidade === null ||
+        item.quantidade === undefined
+          ? '—'
+          : String(item.quantidade),
+        'right'
+      );
+      appendCell(
+        row,
+        moneyOrDash(item.valorUnitario),
+        'right'
+      );
+      appendCell(
+        row,
+        moneyOrDash(item.recarga),
+        'right'
+      );
+
+      body.appendChild(row);
+    });
+  }
+
+  function paintStatus(result) {
+    const status = document.getElementById('fidelityStatus');
+
+    if (!status) return;
+
+    const visible = Array.isArray(result.rows)
+      ? result.rows.length
+      : 0;
+
+    const total = Number(result.totalRegistros || 0);
+
     status.innerHTML = [
-      '<strong>Último lançamento:</strong>',
+      '<strong>Histórico atualizado:</strong>',
       '<span>',
-      String(last.quantidade),
-      ' passagem(ns) • linha ',
-      String(last.linha),
-      ' • ',
+      'Exibindo ',
+      String(visible),
+      ' dos ',
       String(total),
-      ' registro(s)',
+      ' lançamento(s) mais recentes, em ordem crescente.',
       '</span>'
     ].join('');
   }
 
   async function refreshFidelity() {
     const view = ensureView();
+
     if (!view) return;
 
-    const button = document.getElementById('registerFidelityUse');
-    const quantity = document.getElementById('fidelityQuantity');
+    const write = canWrite();
 
-    if (button) button.hidden = !canWrite();
-    if (quantity) quantity.disabled = !canWrite();
+    document.getElementById(
+      'registerFidelityUse'
+    ).hidden = !write;
+
+    document.getElementById(
+      'registerFidelityRecharge'
+    ).hidden = !write;
+
+    document.getElementById(
+      'fidelityQuantity'
+    ).disabled = !write;
+
+    document.getElementById(
+      'fidelityRecharge'
+    ).disabled = !write;
 
     try {
       const result = await call(
-        'bfInfo',
+        'bfList',
         { token: state.token },
         false
       );
 
-      paintFidelityInfo(result);
+      renderHistory(result);
+      paintStatus(result);
     } catch (error) {
       const status = document.getElementById('fidelityStatus');
-      if (status) status.textContent = error.message;
+
+      if (status) {
+        status.textContent = error.message;
+      }
+
       toast(error.message, 'error');
     }
   }
@@ -165,7 +237,10 @@
       return;
     }
 
-    const button = document.getElementById('registerFidelityUse');
+    const button = document.getElementById(
+      'registerFidelityUse'
+    );
+
     const originalText = button.textContent;
 
     button.disabled = true;
@@ -192,9 +267,49 @@
     }
   }
 
+  async function registerFidelityRecharge() {
+    const input = document.getElementById('fidelityRecharge');
+    const value = Number(
+      String(input.value || '').replace(',', '.')
+    );
+
+    if (!Number.isFinite(value) || value <= 0) {
+      toast('Informe um valor de recarga válido.', 'error');
+      return;
+    }
+
+    const button = document.getElementById(
+      'registerFidelityRecharge'
+    );
+
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = 'Registrando...';
+
+    try {
+      const result = await call(
+        'bfRecharge',
+        {
+          token: state.token,
+          valor: value
+        },
+        false
+      );
+
+      toast(result.msg || 'Recarga registrada.');
+      input.value = '';
+      await refreshFidelity();
+    } catch (error) {
+      toast(error.message, 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+
   ensureTab();
   ensureView();
-  adjustBilheteUnicoQuantity();
 
   const originalShowView = showView;
 
