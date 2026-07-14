@@ -3,6 +3,9 @@
 (function () {
   const VIEW_ID = 'viewFidelity';
 
+  let selectedFidelityUse = null;
+  let lastFocusedElement = null;
+
   function canWrite() {
     return state.role === 'admin' || state.role === 'editor';
   }
@@ -11,6 +14,15 @@
     return value === null || value === undefined || value === ''
       ? '—'
       : money(value);
+  }
+
+  function createActionButton(text, className, handler) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = text;
+    button.className = className;
+    button.addEventListener('click', handler);
+    return button;
   }
 
   function ensureTab() {
@@ -73,9 +85,10 @@
         '<thead><tr>',
         '<th>Data</th>',
         '<th>Tipo</th>',
-        '<th class="right">Quantidade</th>',
-        '<th class="right">Valor unitário</th>',
-        '<th class="right">Recarga</th>',
+        '<th>Quantidade</th>',
+        '<th>Valor unitário</th>',
+        '<th>Recarga</th>',
+        '<th>Ações</th>',
         '</tr></thead>',
         '<tbody id="fidelityHistoryBody"></tbody>',
         '</table>',
@@ -118,7 +131,7 @@
     if (!rows.length) {
       emptyRow(
         body,
-        5,
+        6,
         'Nenhum lançamento localizado.'
       );
       return;
@@ -134,20 +147,56 @@
         item.quantidade === null ||
         item.quantidade === undefined
           ? '—'
-          : String(item.quantidade),
-        'right'
+          : String(item.quantidade)
       );
       appendCell(
         row,
-        moneyOrDash(item.valorUnitario),
-        'right'
+        moneyOrDash(item.valorUnitario)
       );
       appendCell(
         row,
-        moneyOrDash(item.recarga),
-        'right'
+        moneyOrDash(item.recarga)
       );
 
+      const actionCell = document.createElement('td');
+
+      if (
+        canWrite() &&
+        result.permiteEdicao !== false &&
+        item.editavel !== false &&
+        item.quantidade !== null &&
+        item.quantidade !== undefined
+      ) {
+        const actions = document.createElement('div');
+        actions.className =
+          'bus-row-actions fidelity-row-actions';
+
+        actions.appendChild(
+          createActionButton(
+            'Editar',
+            'btn-mini btn-edit',
+            function () {
+              openFidelityEdit(item);
+            }
+          )
+        );
+
+        actions.appendChild(
+          createActionButton(
+            'Excluir',
+            'btn-mini btn-delete',
+            function () {
+              openFidelityDelete(item);
+            }
+          )
+        );
+
+        actionCell.appendChild(actions);
+      } else {
+        actionCell.textContent = '—';
+      }
+
+      row.appendChild(actionCell);
       body.appendChild(row);
     });
   }
@@ -308,8 +357,374 @@
     }
   }
 
+  function ensureFidelityEditModal() {
+    let overlay = document.getElementById(
+      'fidelityEditOverlay'
+    );
+
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.id = 'fidelityEditOverlay';
+    overlay.className = 'bus-modal-overlay';
+    overlay.hidden = true;
+
+    overlay.innerHTML = [
+      '<section class="bus-modal" role="dialog" ',
+      'aria-modal="true" aria-labelledby="fidelityEditTitle">',
+      '<button type="button" class="bus-modal-close" ',
+      'id="fidelityEditClose" aria-label="Fechar">×</button>',
+      '<p class="bus-modal-eyebrow">Bilhete Fidelidade</p>',
+      '<h3 id="fidelityEditTitle">Editar passagens</h3>',
+      '<p class="bus-modal-description">',
+      'Altere somente a quantidade registrada na coluna C.',
+      '</p>',
+      '<div class="bus-modal-details">',
+      '<div><span>Linha</span>',
+      '<strong id="fidelityEditLine">—</strong></div>',
+      '<div><span>Data</span>',
+      '<strong id="fidelityEditDate">—</strong></div>',
+      '<div class="bus-modal-detail-wide">',
+      '<span>Tipo</span>',
+      '<strong id="fidelityEditType">—</strong>',
+      '</div>',
+      '</div>',
+      '<label for="fidelityEditQuantity">',
+      'Quantidade de passagens',
+      '</label>',
+      '<input type="number" min="0" max="999" step="1" ',
+      'id="fidelityEditQuantity" inputmode="numeric">',
+      '<div class="bus-modal-actions">',
+      '<button type="button" class="btn ghost" ',
+      'id="fidelityEditCancel">Cancelar</button>',
+      '<button type="button" class="btn" ',
+      'id="fidelityEditSave">Salvar alteração</button>',
+      '</div>',
+      '</section>'
+    ].join('');
+
+    document.body.appendChild(overlay);
+
+    document
+      .getElementById('fidelityEditClose')
+      .addEventListener('click', closeFidelityEdit);
+
+    document
+      .getElementById('fidelityEditCancel')
+      .addEventListener('click', closeFidelityEdit);
+
+    document
+      .getElementById('fidelityEditSave')
+      .addEventListener('click', saveFidelityEdit);
+
+    overlay.addEventListener('click', function (event) {
+      if (event.target === overlay) {
+        closeFidelityEdit();
+      }
+    });
+
+    return overlay;
+  }
+
+  function openFidelityEdit(item) {
+    selectedFidelityUse = item;
+    lastFocusedElement = document.activeElement;
+
+    const overlay = ensureFidelityEditModal();
+
+    document.getElementById('fidelityEditLine').textContent =
+      String(item.linha || '—');
+
+    document.getElementById('fidelityEditDate').textContent =
+      item.data || '—';
+
+    document.getElementById('fidelityEditType').textContent =
+      item.tipo || '—';
+
+    document.getElementById('fidelityEditQuantity').value =
+      String(item.quantidade ?? 0);
+
+    overlay.hidden = false;
+
+    requestAnimationFrame(function () {
+      const input = document.getElementById(
+        'fidelityEditQuantity'
+      );
+
+      input.focus();
+      input.select();
+    });
+  }
+
+  function closeFidelityEdit() {
+    const overlay = document.getElementById(
+      'fidelityEditOverlay'
+    );
+
+    if (overlay) {
+      overlay.hidden = true;
+    }
+
+    selectedFidelityUse = null;
+    restoreFocus();
+  }
+
+  async function saveFidelityEdit() {
+    if (
+      !selectedFidelityUse ||
+      !selectedFidelityUse.linha
+    ) {
+      return;
+    }
+
+    const input = document.getElementById(
+      'fidelityEditQuantity'
+    );
+
+    const raw = String(input.value || '').trim();
+
+    if (!/^\d+$/.test(raw)) {
+      toast(
+        'Informe uma quantidade inteira igual ou maior que zero.',
+        'error'
+      );
+      return;
+    }
+
+    const quantity = Number(raw);
+
+    if (quantity < 0 || quantity > 999) {
+      toast('A quantidade deve estar entre 0 e 999.', 'error');
+      return;
+    }
+
+    const button = document.getElementById(
+      'fidelityEditSave'
+    );
+
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = 'Salvando...';
+
+    try {
+      const result = await call(
+        'bfUpdateUse',
+        {
+          token: state.token,
+          linha: selectedFidelityUse.linha,
+          qtd: quantity
+        },
+        false
+      );
+
+      closeFidelityEdit();
+      toast(result.msg || 'Registro atualizado.');
+      await refreshFidelity();
+    } catch (error) {
+      toast(error.message, 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+
+  function ensureFidelityDeleteModal() {
+    let overlay = document.getElementById(
+      'fidelityDeleteOverlay'
+    );
+
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.id = 'fidelityDeleteOverlay';
+    overlay.className = 'bus-modal-overlay';
+    overlay.hidden = true;
+
+    overlay.innerHTML = [
+      '<section class="bus-modal bus-modal-danger" ',
+      'role="alertdialog" aria-modal="true" ',
+      'aria-labelledby="fidelityDeleteTitle">',
+      '<button type="button" class="bus-modal-close" ',
+      'id="fidelityDeleteClose" aria-label="Fechar">×</button>',
+      '<p class="bus-modal-eyebrow">Confirmação necessária</p>',
+      '<h3 id="fidelityDeleteTitle">',
+      'Excluir registro de passagens?',
+      '</h3>',
+      '<p class="bus-modal-description">',
+      'Será apagada somente a quantidade da coluna C.',
+      '</p>',
+      '<div class="bus-modal-details">',
+      '<div><span>Linha</span>',
+      '<strong id="fidelityDeleteLine">—</strong></div>',
+      '<div><span>Data</span>',
+      '<strong id="fidelityDeleteDate">—</strong></div>',
+      '<div><span>Quantidade</span>',
+      '<strong id="fidelityDeleteQuantity">—</strong></div>',
+      '<div class="bus-modal-detail-wide">',
+      '<span>Tipo</span>',
+      '<strong id="fidelityDeleteType">—</strong>',
+      '</div>',
+      '</div>',
+      '<p class="bus-modal-warning">',
+      'As fórmulas, a formatação e eventual recarga da coluna G ',
+      'serão preservadas.',
+      '</p>',
+      '<div class="bus-modal-actions">',
+      '<button type="button" class="btn ghost" ',
+      'id="fidelityDeleteCancel">Cancelar</button>',
+      '<button type="button" class="bus-danger-button" ',
+      'id="fidelityDeleteConfirm">Excluir registro</button>',
+      '</div>',
+      '</section>'
+    ].join('');
+
+    document.body.appendChild(overlay);
+
+    document
+      .getElementById('fidelityDeleteClose')
+      .addEventListener('click', closeFidelityDelete);
+
+    document
+      .getElementById('fidelityDeleteCancel')
+      .addEventListener('click', closeFidelityDelete);
+
+    document
+      .getElementById('fidelityDeleteConfirm')
+      .addEventListener('click', confirmFidelityDelete);
+
+    overlay.addEventListener('click', function (event) {
+      if (event.target === overlay) {
+        closeFidelityDelete();
+      }
+    });
+
+    return overlay;
+  }
+
+  function openFidelityDelete(item) {
+    selectedFidelityUse = item;
+    lastFocusedElement = document.activeElement;
+
+    const overlay = ensureFidelityDeleteModal();
+
+    document.getElementById(
+      'fidelityDeleteLine'
+    ).textContent = String(item.linha || '—');
+
+    document.getElementById(
+      'fidelityDeleteDate'
+    ).textContent = item.data || '—';
+
+    document.getElementById(
+      'fidelityDeleteQuantity'
+    ).textContent = String(item.quantidade ?? 0);
+
+    document.getElementById(
+      'fidelityDeleteType'
+    ).textContent = item.tipo || '—';
+
+    const button = document.getElementById(
+      'fidelityDeleteConfirm'
+    );
+
+    button.disabled = false;
+    button.textContent = 'Excluir registro';
+
+    overlay.hidden = false;
+
+    requestAnimationFrame(function () {
+      document.getElementById(
+        'fidelityDeleteCancel'
+      ).focus();
+    });
+  }
+
+  function closeFidelityDelete() {
+    const overlay = document.getElementById(
+      'fidelityDeleteOverlay'
+    );
+
+    if (overlay) {
+      overlay.hidden = true;
+    }
+
+    selectedFidelityUse = null;
+    restoreFocus();
+  }
+
+  async function confirmFidelityDelete() {
+    if (
+      !selectedFidelityUse ||
+      !selectedFidelityUse.linha
+    ) {
+      return;
+    }
+
+    const button = document.getElementById(
+      'fidelityDeleteConfirm'
+    );
+
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = 'Excluindo...';
+
+    try {
+      const result = await call(
+        'bfDeleteUse',
+        {
+          token: state.token,
+          linha: selectedFidelityUse.linha
+        },
+        false
+      );
+
+      closeFidelityDelete();
+      toast(result.msg || 'Registro excluído.');
+      await refreshFidelity();
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = originalText;
+      toast(error.message, 'error');
+    }
+  }
+
+  function restoreFocus() {
+    if (
+      lastFocusedElement &&
+      typeof lastFocusedElement.focus === 'function'
+    ) {
+      lastFocusedElement.focus();
+    }
+
+    lastFocusedElement = null;
+  }
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+
+    const editOverlay = document.getElementById(
+      'fidelityEditOverlay'
+    );
+
+    const deleteOverlay = document.getElementById(
+      'fidelityDeleteOverlay'
+    );
+
+    if (editOverlay && !editOverlay.hidden) {
+      closeFidelityEdit();
+    }
+
+    if (deleteOverlay && !deleteOverlay.hidden) {
+      closeFidelityDelete();
+    }
+  });
+
   ensureTab();
   ensureView();
+  ensureFidelityEditModal();
+  ensureFidelityDeleteModal();
 
   const originalShowView = showView;
 
