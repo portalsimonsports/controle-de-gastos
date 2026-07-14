@@ -5,6 +5,17 @@
     return state.role === 'admin' || state.role === 'editor';
   }
 
+  function firstUpper(value) {
+    const text = String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!text) return '';
+
+    return text.charAt(0).toLocaleUpperCase('pt-BR') +
+      text.slice(1);
+  }
+
   function ensureCalendarEntryPanel() {
     const view = document.getElementById('viewCalendar');
     if (!view) return null;
@@ -21,10 +32,21 @@
         '<div class="grid">',
         '<div class="col-6">',
         '<label for="calendarEntryType">Tipo</label>',
-        '<select id="calendarEntryType"></select>',
+        '<input id="calendarEntryType" ',
+        'list="calendarEntryTypeList" ',
+        'maxlength="220" ',
+        'placeholder="Selecione ou digite um novo tipo" ',
+        'autocomplete="off">',
+        '<datalist id="calendarEntryTypeList"></datalist>',
+        '<p class="calendar-entry-hint">',
+        'A lista é carregada da coluna K. ',
+        'Também é possível digitar um novo tipo.',
+        '</p>',
         '</div>',
         '<div class="col-3">',
-        '<label for="calendarEntryDate">Data da última troca</label>',
+        '<label for="calendarEntryDate">',
+        'Data da última troca',
+        '</label>',
         '<input type="date" id="calendarEntryDate">',
         '</div>',
         '<div class="col-3 actions">',
@@ -46,34 +68,37 @@
       document
         .getElementById('calendarEntryClear')
         .addEventListener('click', clearCalendarEntry);
+
+      document
+        .getElementById('calendarEntryType')
+        .addEventListener('blur', function (event) {
+          event.target.value = firstUpper(event.target.value);
+        });
     }
 
     return panel;
   }
 
   function populateCalendarTypes(options) {
-    const select = document.getElementById('calendarEntryType');
-    if (!select) return;
+    const input = document.getElementById('calendarEntryType');
+    const list = document.getElementById('calendarEntryTypeList');
 
-    const current = select.value;
-    select.innerHTML = '';
+    if (!input || !list) return;
 
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = 'Selecione';
-    select.appendChild(placeholder);
+    const current = input.value;
+    list.innerHTML = '';
 
     (options || []).forEach(function (value) {
+      const normalized = firstUpper(value);
+
+      if (!normalized) return;
+
       const option = document.createElement('option');
-      option.value = value;
-      option.textContent = value;
-
-      if (value === current) {
-        option.selected = true;
-      }
-
-      select.appendChild(option);
+      option.value = normalized;
+      list.appendChild(option);
     });
+
+    input.value = current;
   }
 
   function clearCalendarEntry() {
@@ -103,9 +128,14 @@
 
     const headerRow = document.createElement('tr');
 
-    rows[0].forEach(function (value) {
+    rows[0].forEach(function (value, index) {
       const th = document.createElement('th');
       th.textContent = value;
+
+      if (index >= 2 && index <= 6) {
+        th.classList.add('calendar-centered-column');
+      }
+
       headerRow.appendChild(th);
     });
 
@@ -114,8 +144,15 @@
     rows.slice(1).forEach(function (values) {
       const row = document.createElement('tr');
 
-      values.forEach(function (value) {
-        appendCell(row, value);
+      values.forEach(function (value, index) {
+        const cell = document.createElement('td');
+        cell.textContent = value == null ? '' : value;
+
+        if (index >= 2 && index <= 6) {
+          cell.classList.add('calendar-centered-column');
+        }
+
+        row.appendChild(cell);
       });
 
       body.appendChild(row);
@@ -158,17 +195,21 @@
   }
 
   async function saveCalendarEntry() {
-    const type = document.getElementById(
+    const typeInput = document.getElementById(
       'calendarEntryType'
-    ).value;
+    );
+
+    const type = firstUpper(typeInput.value);
 
     const date = document.getElementById(
       'calendarEntryDate'
     ).value;
 
+    typeInput.value = type;
+
     if (!type || !date) {
       toast(
-        'Selecione o tipo e informe a data.',
+        'Informe o tipo e a data.',
         'error'
       );
       return;
