@@ -14,3 +14,20 @@
 .calendar-entry-panel .actions {
   align-self: end;
 }
+
+.calendar-entry-hint {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+#viewCalendar .calendar-centered-column {
+  text-align: center;
+  vertical-align: middle;
+}
+
+#viewCalendar thead th:nth-child(n+3):nth-child(-n+7),
+#viewCalendar tbody td:nth-child(n+3):nth-child(-n+7) {
+  text-align: center;
+  vertical-align: middle;
+}
