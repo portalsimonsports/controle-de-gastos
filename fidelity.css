@@ -1,6 +1,10 @@
 .fidelity-panel {
   display: grid;
-  grid-template-columns: minmax(220px, 360px) auto;
+  grid-template-columns:
+    minmax(190px, 1fr)
+    auto
+    minmax(190px, 1fr)
+    auto;
   gap: 12px;
   align-items: end;
 }
@@ -31,6 +35,16 @@
 
 .fidelity-status strong {
   color: var(--text);
+}
+
+#viewFidelity table {
+  min-width: 680px;
+}
+
+@media (max-width: 950px) {
+  .fidelity-panel {
+    grid-template-columns: 1fr auto;
+  }
 }
 
 @media (max-width: 700px) {
