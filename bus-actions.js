@@ -8,6 +8,12 @@
     return state.role === 'admin' || state.role === 'editor';
   }
 
+  function moneyOrDash(value) {
+    return value === null || value === undefined || value === ''
+      ? '—'
+      : money(value);
+  }
+
   function createActionButton(text, className, handler) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -17,139 +23,191 @@
     return button;
   }
 
-  function prepareBusTable(showActions) {
-    const table = document.querySelector('#viewBus table');
-    if (!table) return;
+  function prepareBusView() {
+    const quantity = document.getElementById('busQuantity');
 
-    const headerRow = table.querySelector('thead tr');
-    if (!headerRow) return;
+    if (quantity) {
+      quantity.min = '0';
+      quantity.max = '999';
+      quantity.step = '1';
 
-    let actionHeader = headerRow.querySelector(
-      '[data-bus-actions-header]'
-    );
-
-    if (showActions && !actionHeader) {
-      actionHeader = document.createElement('th');
-      actionHeader.textContent = 'Ações';
-      actionHeader.className = 'right';
-      actionHeader.dataset.busActionsHeader = '1';
-      headerRow.appendChild(actionHeader);
+      if (quantity.value === '') {
+        quantity.value = '1';
+      }
     }
 
-    if (!showActions && actionHeader) {
-      actionHeader.remove();
+    const quantityLabel = document.querySelector(
+      'label[for="busQuantity"]'
+    );
+
+    if (quantityLabel) {
+      quantityLabel.textContent = 'Quantidade de passagens';
+    }
+
+    ['busStart', 'busEnd', 'loadBus'].forEach(function (id) {
+      const element = document.getElementById(id);
+
+      if (element && element.closest('.col-3')) {
+        element.closest('.col-3').hidden = true;
+      }
+    });
+
+    const table = document.querySelector('#viewBus table');
+
+    if (!table) return;
+
+    const wrap = table.closest('.table-wrap');
+
+    if (
+      wrap &&
+      !document.getElementById('busHistoryTitle')
+    ) {
+      const title = document.createElement('h4');
+      title.id = 'busHistoryTitle';
+      title.className = 'passage-history-title';
+      title.textContent = 'Últimos 10 lançamentos';
+      wrap.parentNode.insertBefore(title, wrap);
+    }
+
+    const headerRow = table.querySelector('thead tr');
+
+    if (headerRow) {
+      headerRow.innerHTML = [
+        '<th>Data</th>',
+        '<th>Tipo</th>',
+        '<th class="right">Quantidade</th>',
+        '<th class="right">Valor unitário</th>',
+        '<th class="right">Recarga</th>',
+        '<th class="right">Ações</th>'
+      ].join('');
     }
   }
 
   function renderBusRows(result) {
     const body = document.getElementById('busBody');
-    const showActions =
-      canWrite() && result.permiteEdicao !== false;
-
-    prepareBusTable(showActions);
-    body.innerHTML = '';
-
     const rows = Array.isArray(result.rows)
       ? result.rows
       : [];
 
+    body.innerHTML = '';
+
     if (!rows.length) {
-      emptyRow(body, showActions ? 5 : 4);
+      emptyRow(
+        body,
+        6,
+        'Nenhum lançamento localizado.'
+      );
       return;
     }
 
     rows.forEach(function (item) {
       const row = document.createElement('tr');
 
-      appendCell(row, item.data);
-      appendCell(row, item.hora || '');
-      appendCell(row, item.tipo);
-      appendCell(row, money(item.valor), 'right');
+      appendCell(row, item.data || '—');
+      appendCell(row, item.tipo || '—');
+      appendCell(
+        row,
+        item.quantidade === null ||
+        item.quantidade === undefined
+          ? '—'
+          : String(item.quantidade),
+        'right'
+      );
+      appendCell(
+        row,
+        moneyOrDash(item.valorUnitario),
+        'right'
+      );
+      appendCell(
+        row,
+        moneyOrDash(item.recarga),
+        'right'
+      );
 
-      if (showActions) {
-        const cell = document.createElement('td');
-        cell.className = 'right';
+      const actionCell = document.createElement('td');
+      actionCell.className = 'right';
 
-        if (
-          item.registro === 'uso' &&
-          item.editavel !== false
-        ) {
-          const actions = document.createElement('div');
-          actions.className = 'bus-row-actions';
+      if (
+        canWrite() &&
+        result.permiteEdicao !== false &&
+        item.editavel !== false &&
+        item.quantidade !== null &&
+        item.quantidade !== undefined
+      ) {
+        const actions = document.createElement('div');
+        actions.className = 'bus-row-actions';
 
-          actions.appendChild(
-            createActionButton(
-              'Editar',
-              'btn-mini btn-edit',
-              function () {
-                openBusEdit(item);
-              }
-            )
-          );
+        actions.appendChild(
+          createActionButton(
+            'Editar',
+            'btn-mini btn-edit',
+            function () {
+              openBusEdit(item);
+            }
+          )
+        );
 
-          actions.appendChild(
-            createActionButton(
-              'Excluir',
-              'btn-mini btn-delete',
-              function () {
-                openBusDelete(item);
-              }
-            )
-          );
+        actions.appendChild(
+          createActionButton(
+            'Excluir',
+            'btn-mini btn-delete',
+            function () {
+              openBusDelete(item);
+            }
+          )
+        );
 
-          cell.appendChild(actions);
-        } else {
-          cell.textContent = '—';
-        }
-
-        row.appendChild(cell);
+        actionCell.appendChild(actions);
+      } else {
+        actionCell.textContent = '—';
       }
 
+      row.appendChild(actionCell);
       body.appendChild(row);
     });
   }
 
-  async function enhancedLoadBus() {
-    const start = document.getElementById('busStart').value;
-    const end = document.getElementById('busEnd').value;
+  function paintBusHistoryInfo(result) {
+    const info = document.getElementById('busInfo');
 
-    if (!start || !end) {
-      toast('Informe o período.', 'error');
-      return;
-    }
+    if (!info) return;
 
-    const button = document.getElementById('loadBus');
-    const originalText = button ? button.textContent : '';
+    const visible = Array.isArray(result.rows)
+      ? result.rows.length
+      : 0;
 
-    if (button) {
-      button.disabled = true;
-      button.textContent = 'Carregando...';
-    }
+    const total = Number(result.totalRegistros || 0);
+
+    info.textContent =
+      'Exibindo ' +
+      visible +
+      ' dos ' +
+      total +
+      ' lançamento(s) mais recentes, em ordem crescente.';
+  }
+
+  async function loadLastTenBus() {
+    prepareBusView();
 
     try {
       const result = await call(
         'buList',
-        {
-          token: state.token,
-          inicio: start,
-          fim: end
-        },
+        { token: state.token },
         false
       );
 
-      paintBus(result);
+      if (typeof paintBus === 'function') {
+        paintBus(result);
+      }
+
       renderBusRows(result);
+      paintBusHistoryInfo(result);
     } catch (error) {
       toast(error.message, 'error');
-    } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = originalText;
-      }
     }
   }
 
-  async function enhancedRegisterUse() {
+  async function registerBusUse() {
     const input = document.getElementById('busQuantity');
     const raw = String(input.value || '').trim();
 
@@ -186,8 +244,45 @@
 
       toast(result.msg || 'Passagens registradas.');
       input.value = '1';
-      await refreshBus();
-      await enhancedLoadBus();
+      await loadLastTenBus();
+    } catch (error) {
+      toast(error.message, 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+
+  async function registerBusRecharge() {
+    const input = document.getElementById('busRecharge');
+    const value = Number(
+      String(input.value || '').replace(',', '.')
+    );
+
+    if (!Number.isFinite(value) || value <= 0) {
+      toast('Informe um valor de recarga válido.', 'error');
+      return;
+    }
+
+    const button = document.getElementById('registerRecharge');
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = 'Registrando...';
+
+    try {
+      const result = await call(
+        'buRecharge',
+        {
+          token: state.token,
+          valor: value
+        },
+        false
+      );
+
+      toast(result.msg || 'Recarga registrada.');
+      input.value = '';
+      await loadLastTenBus();
     } catch (error) {
       toast(error.message, 'error');
     } finally {
@@ -213,11 +308,15 @@
       'id="busEditClose" aria-label="Fechar">×</button>',
       '<p class="bus-modal-eyebrow">Bilhete Único</p>',
       '<h3 id="busEditTitle">Editar passagens</h3>',
-      '<p class="bus-modal-description" id="busEditDescription"></p>',
+      '<p class="bus-modal-description">',
+      'Altere somente a quantidade registrada na coluna C.',
+      '</p>',
       '<div class="bus-modal-details">',
       '<div><span>Linha</span><strong id="busEditLine">—</strong></div>',
       '<div><span>Data</span><strong id="busEditDate">—</strong></div>',
-      '<div><span>Tipo</span><strong id="busEditType">—</strong></div>',
+      '<div class="bus-modal-detail-wide">',
+      '<span>Tipo</span><strong id="busEditType">—</strong>',
+      '</div>',
       '</div>',
       '<label for="busEditQuantity">Quantidade de passagens</label>',
       '<input type="number" min="0" max="999" step="1" ',
@@ -269,9 +368,6 @@
     document.getElementById('busEditType').textContent =
       item.tipo || '—';
 
-    document.getElementById('busEditDescription').textContent =
-      'Altere somente a quantidade registrada na coluna C.';
-
     document.getElementById('busEditQuantity').value =
       String(item.quantidade ?? 0);
 
@@ -292,15 +388,7 @@
     }
 
     selectedUse = null;
-
-    if (
-      lastFocusedElement &&
-      typeof lastFocusedElement.focus === 'function'
-    ) {
-      lastFocusedElement.focus();
-    }
-
-    lastFocusedElement = null;
+    restoreFocus();
   }
 
   async function saveBusEdit() {
@@ -343,8 +431,7 @@
 
       closeBusEdit();
       toast(result.msg || 'Registro atualizado.');
-      await refreshBus();
-      await enhancedLoadBus();
+      await loadLastTenBus();
     } catch (error) {
       toast(error.message, 'error');
     } finally {
@@ -372,18 +459,20 @@
       '<p class="bus-modal-eyebrow">Confirmação necessária</p>',
       '<h3 id="busDeleteTitle">Excluir registro de passagens?</h3>',
       '<p class="bus-modal-description">',
-      'Esta ação limpará somente a quantidade da coluna C.',
+      'Será apagada somente a quantidade da coluna C.',
       '</p>',
       '<div class="bus-modal-details">',
       '<div><span>Linha</span><strong id="busDeleteLine">—</strong></div>',
       '<div><span>Data</span><strong id="busDeleteDate">—</strong></div>',
-      '<div><span>Quantidade</span><strong id="busDeleteQuantity">—</strong></div>',
+      '<div><span>Quantidade</span>',
+      '<strong id="busDeleteQuantity">—</strong></div>',
       '<div class="bus-modal-detail-wide">',
       '<span>Tipo</span><strong id="busDeleteType">—</strong>',
       '</div>',
       '</div>',
       '<p class="bus-modal-warning">',
-      'As fórmulas e a formatação da linha serão preservadas.',
+      'As fórmulas, a formatação e eventual recarga da coluna G ',
+      'serão preservadas.',
       '</p>',
       '<div class="bus-modal-actions">',
       '<button type="button" class="btn ghost" ',
@@ -454,15 +543,7 @@
     }
 
     selectedUse = null;
-
-    if (
-      lastFocusedElement &&
-      typeof lastFocusedElement.focus === 'function'
-    ) {
-      lastFocusedElement.focus();
-    }
-
-    lastFocusedElement = null;
+    restoreFocus();
   }
 
   async function confirmBusDelete() {
@@ -486,13 +567,23 @@
 
       closeBusDelete();
       toast(result.msg || 'Registro excluído.');
-      await refreshBus();
-      await enhancedLoadBus();
+      await loadLastTenBus();
     } catch (error) {
       button.disabled = false;
       button.textContent = originalText;
       toast(error.message, 'error');
     }
+  }
+
+  function restoreFocus() {
+    if (
+      lastFocusedElement &&
+      typeof lastFocusedElement.focus === 'function'
+    ) {
+      lastFocusedElement.focus();
+    }
+
+    lastFocusedElement = null;
   }
 
   document.addEventListener('keydown', function (event) {
@@ -510,20 +601,6 @@
     }
   });
 
-  const loadButton = document.getElementById('loadBus');
-
-  if (loadButton) {
-    loadButton.addEventListener(
-      'click',
-      function (event) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        enhancedLoadBus();
-      },
-      true
-    );
-  }
-
   const useButton = document.getElementById('registerUse');
 
   if (useButton) {
@@ -532,7 +609,23 @@
       function (event) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        enhancedRegisterUse();
+        registerBusUse();
+      },
+      true
+    );
+  }
+
+  const rechargeButton = document.getElementById(
+    'registerRecharge'
+  );
+
+  if (rechargeButton) {
+    rechargeButton.addEventListener(
+      'click',
+      function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        registerBusRecharge();
       },
       true
     );
@@ -544,14 +637,15 @@
     await originalShowView(id);
 
     if (id === 'viewBus') {
-      await enhancedLoadBus();
+      await loadLastTenBus();
     }
   };
 
+  prepareBusView();
   ensureBusEditModal();
   ensureBusDeleteModal();
 
   if (state.token && state.activeView === 'viewBus') {
-    setTimeout(enhancedLoadBus, 0);
+    setTimeout(loadLastTenBus, 0);
   }
 })();
