@@ -1,0 +1,16 @@
+.calendar-entry-panel {
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(11, 20, 36, .55);
+}
+
+.calendar-entry-panel h4 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.calendar-entry-panel .actions {
+  align-self: end;
+}
