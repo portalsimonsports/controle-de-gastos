@@ -1,0 +1,206 @@
+/* Recorrência de despesas e controle do Saldo Junior. */
+
+.expense-extra-field {
+  min-width: 0;
+}
+
+.expense-extra-field[hidden] {
+  display: none !important;
+}
+
+.expense-account-note,
+.expense-recurrence-note {
+  grid-column: 1 / -1;
+  margin: -2px 0 2px;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.junior-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.junior-summary-card {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(8, 18, 33, .44);
+}
+
+.junior-summary-card span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+}
+
+.junior-summary-card strong {
+  display: block;
+  font-size: 1.2rem;
+}
+
+.junior-summary-card.balance {
+  border-color: rgba(74, 139, 255, .65);
+  background: rgba(74, 139, 255, .09);
+}
+
+.junior-form {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, .8fr)
+    minmax(180px, 1fr)
+    minmax(260px, 1.6fr)
+    minmax(160px, .8fr)
+    auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(8, 18, 33, .35);
+}
+
+.junior-form > div {
+  min-width: 0;
+}
+
+.junior-form .actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.junior-source-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+#juniorBody td,
+#juniorBody th {
+  vertical-align: middle;
+}
+
+.junior-row-actions {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  flex-wrap: nowrap;
+}
+
+.junior-origin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.junior-origin.expense {
+  border-color: rgba(255, 190, 92, .5);
+  color: #ffd18a;
+}
+
+.junior-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 8, 18, .78);
+  backdrop-filter: blur(7px);
+}
+
+.junior-modal-overlay[hidden] {
+  display: none !important;
+}
+
+.junior-modal {
+  width: min(560px, 100%);
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: #13213a;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .45);
+}
+
+.junior-modal h3 {
+  margin: 0 0 14px;
+}
+
+.junior-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.junior-modal-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.junior-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+@media (max-width: 1050px) {
+  .junior-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .junior-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .junior-form .description-field,
+  .junior-form .actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .junior-summary,
+  .junior-form,
+  .junior-modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .junior-form .description-field,
+  .junior-form .actions,
+  .junior-modal-grid .wide {
+    grid-column: auto;
+  }
+
+  .junior-form .actions,
+  .junior-modal-actions {
+    flex-direction: column;
+  }
+
+  .junior-form .btn,
+  .junior-modal-actions .btn {
+    width: 100%;
+  }
+
+  #viewJunior .table-wrap {
+    overflow-x: auto;
+  }
+
+  #viewJunior table {
+    min-width: 860px;
+  }
+}
