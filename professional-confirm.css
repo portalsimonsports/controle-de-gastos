@@ -1,0 +1,229 @@
+.professional-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 8, 18, .78);
+  backdrop-filter: blur(7px);
+}
+
+.professional-confirm {
+  position: relative;
+  width: min(500px, 100%);
+  padding: 24px;
+  border: 1px solid rgba(255, 98, 98, .32);
+  border-radius: 22px;
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      rgba(255, 98, 98, .12),
+      transparent 38%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(24, 37, 59, .995),
+      rgba(14, 24, 41, .995)
+    );
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, .56),
+    0 0 0 1px rgba(255, 255, 255, .025) inset;
+  animation: professionalConfirmEnter .18s ease-out;
+}
+
+.professional-confirm-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  background: rgba(11, 20, 36, .72);
+  cursor: pointer;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.professional-confirm-close:hover,
+.professional-confirm-close:focus-visible {
+  color: var(--text);
+  border-color: rgba(255, 98, 98, .5);
+  outline: none;
+}
+
+.professional-confirm-heading {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding-right: 38px;
+}
+
+.professional-confirm-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(255, 98, 98, .55);
+  border-radius: 16px;
+  color: #ffdede;
+  background: rgba(255, 98, 98, .12);
+  font-size: 1.55rem;
+  font-weight: 900;
+}
+
+.professional-confirm-eyebrow {
+  margin: 0 0 4px;
+  color: #ff9f9f;
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.professional-confirm h3 {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+  letter-spacing: -.02em;
+}
+
+.professional-confirm-heading p:last-child {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.professional-confirm-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 20px 0 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: rgba(7, 16, 30, .54);
+}
+
+.professional-confirm-details div {
+  min-width: 0;
+}
+
+.professional-confirm-details span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.professional-confirm-details strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: .94rem;
+}
+
+.professional-confirm-detail-wide {
+  grid-column: 1 / -1;
+}
+
+.professional-confirm-warning {
+  margin: 0;
+  padding: 11px 12px;
+  border-left: 3px solid var(--warning);
+  border-radius: 8px;
+  color: #d7dfed;
+  background: rgba(242, 184, 75, .08);
+  font-size: .86rem;
+  line-height: 1.5;
+}
+
+.professional-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.professional-confirm-cancel,
+.professional-confirm-delete {
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 11px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.professional-confirm-cancel {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--card-2);
+}
+
+.professional-confirm-delete {
+  border: 1px solid #ff6262;
+  color: #fff;
+  background: linear-gradient(180deg, #ff6f6f, #dc3f3f);
+  box-shadow: 0 9px 24px rgba(220, 63, 63, .22);
+}
+
+.professional-confirm-cancel:hover,
+.professional-confirm-delete:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.professional-confirm-cancel:focus-visible,
+.professional-confirm-delete:focus-visible {
+  outline: 3px solid rgba(79, 140, 255, .24);
+  outline-offset: 2px;
+}
+
+.professional-confirm-delete:disabled {
+  cursor: wait;
+  opacity: .62;
+  transform: none;
+}
+
+@keyframes professionalConfirmEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 560px) {
+  .professional-confirm {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .professional-confirm-heading {
+    grid-template-columns: 44px 1fr;
+  }
+
+  .professional-confirm-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  .professional-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .professional-confirm-cancel,
+  .professional-confirm-delete {
+    width: 100%;
+  }
+}
