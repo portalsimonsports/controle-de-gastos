@@ -1,0 +1,187 @@
+#viewExpenses .expense-extra-field {
+  min-width: 0;
+}
+
+.junior-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.junior-heading h3,
+.junior-heading p {
+  margin: 0;
+}
+
+.junior-heading p {
+  margin-top: 5px;
+}
+
+.junior-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.junior-stat {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(8, 18, 33, .48);
+}
+
+.junior-stat span {
+  display: block;
+  color: var(--muted);
+  font-size: .82rem;
+  margin-bottom: 6px;
+}
+
+.junior-stat strong {
+  font-size: 1.35rem;
+}
+
+.junior-balance {
+  border-color: rgba(46, 203, 114, .45);
+}
+
+.junior-form {
+  display: grid;
+  grid-template-columns: 150px 190px minmax(260px, 1fr) 180px auto;
+  gap: 10px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(8, 18, 33, .42);
+  margin-bottom: 16px;
+}
+
+.junior-form > * {
+  min-width: 0;
+}
+
+.junior-form .btn {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.junior-table th,
+.junior-table td {
+  vertical-align: middle;
+}
+
+.junior-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(3, 8, 16, .76);
+  backdrop-filter: blur(5px);
+}
+
+.junior-confirm-card {
+  width: min(430px, 100%);
+  padding: 22px;
+  border: 1px solid rgba(255, 98, 98, .5);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #19243a, #111b2d);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .45);
+}
+
+.junior-confirm-card h3 {
+  margin: 0 0 8px;
+}
+
+.junior-confirm-card p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.junior-confirm-card .actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 1100px) {
+  .junior-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .junior-description-field {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .junior-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .junior-summary,
+  .junior-form {
+    grid-template-columns: 1fr;
+  }
+
+  .junior-description-field {
+    grid-column: auto;
+  }
+
+  .junior-table-wrap {
+    overflow: visible;
+  }
+
+  .junior-table,
+  .junior-table tbody,
+  .junior-table tr {
+    display: block;
+  }
+
+  .junior-table thead {
+    display: none;
+  }
+
+  .junior-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .junior-table tr {
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(8, 18, 33, .45);
+  }
+
+  .junior-table td {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px;
+    padding: 9px 6px;
+    text-align: right !important;
+  }
+
+  .junior-table td::before {
+    color: var(--muted);
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .junior-table td:nth-child(1)::before { content: 'Data'; }
+  .junior-table td:nth-child(2)::before { content: 'Tipo'; }
+  .junior-table td:nth-child(3)::before { content: 'Descrição'; }
+  .junior-table td:nth-child(4)::before { content: 'Crédito'; }
+  .junior-table td:nth-child(5)::before { content: 'Débito'; }
+  .junior-table td:nth-child(6)::before { content: 'Saldo'; }
+  .junior-table td:nth-child(7)::before { content: 'Ações'; }
+
+  .junior-table td:last-child .btn {
+    width: 100%;
+  }
+}
