@@ -15,7 +15,7 @@
   <div class="carregando">Carregando…</div>
 
   <script>
-    fetch('./app.html?v=202607142050', {cache:'no-store'})
+    fetch('./app.html?v=202607142130', {cache:'no-store'})
       .then(function(resposta){
         if(!resposta.ok){
           throw new Error('Falha ao carregar o sistema.');
@@ -40,13 +40,13 @@
 
         html = html.replace(
           '</head>',
-          '<link rel="stylesheet" href="./enhancements.css?v=202607142050"><link rel="stylesheet" href="./calendar-enhancements.css?v=202607142050"><link rel="stylesheet" href="./professional-confirm.css?v=202607142050"><link rel="stylesheet" href="./card-period.css?v=202607142050"><link rel="stylesheet" href="./fidelity.css?v=202607142050"><link rel="stylesheet" href="./bus-actions.css?v=202607142050"><link rel="stylesheet" href="./bilhetes-layout.css?v=202607142050"><link rel="stylesheet" href="./bilhete-controls.css?v=202607142050"><link rel="stylesheet" href="./junior-recorrencia.css?v=202607142050"><link rel="stylesheet" href="./mobile-data-fix.css?v=202607142050">' +
+          '<link rel="stylesheet" href="./enhancements.css?v=202607142130"><link rel="stylesheet" href="./calendar-enhancements.css?v=202607142130"><link rel="stylesheet" href="./professional-confirm.css?v=202607142130"><link rel="stylesheet" href="./card-period.css?v=202607142130"><link rel="stylesheet" href="./fidelity.css?v=202607142130"><link rel="stylesheet" href="./bus-actions.css?v=202607142130"><link rel="stylesheet" href="./bilhetes-layout.css?v=202607142130"><link rel="stylesheet" href="./bilhete-controls.css?v=202607142130"><link rel="stylesheet" href="./junior-recorrencia.css?v=202607142130"><link rel="stylesheet" href="./mobile-data-fix.css?v=202607142130">' +
           '</head>'
         );
 
         html = html.replace(
           '</body>',
-          '<script src="./enhancements.js?v=202607142050"><\/script><script src="./calendar-enhancements.js?v=202607142050"><\/script><script src="./professional-confirm.js?v=202607142050"><\/script><script src="./card-period.js?v=202607142050"><\/script><script src="./fidelity.js?v=202607142050"><\/script><script src="./bus-actions.js?v=202607142050"><\/script><script src="./bilhete-columns.js?v=202607142050"><\/script><script src="./bilhete-controls.js?v=202607142050"><\/script><script src="./junior-recorrencia.js?v=202607142050"><\/script><script src="./expense-ptbr.js?v=202607142050"><\/script><script src="./bilhete-delete-fix.js?v=202607142050"><\/script><script src="./mobile-data-fix.js?v=202607142050"><\/script>' +
+          '<script src="./enhancements.js?v=202607142130"><\/script><script src="./calendar-enhancements.js?v=202607142130"><\/script><script src="./professional-confirm.js?v=202607142130"><\/script><script src="./card-period.js?v=202607142130"><\/script><script src="./fidelity.js?v=202607142130"><\/script><script src="./bus-actions.js?v=202607142130"><\/script><script src="./bilhete-columns.js?v=202607142130"><\/script><script src="./bilhete-controls.js?v=202607142130"><\/script><script src="./junior-recorrencia.js?v=202607142130"><\/script><script src="./expense-ptbr.js?v=202607142130"><\/script><script src="./bilhete-delete-fix.js?v=202607142130"><\/script><script src="./mobile-data-fix.js?v=202607142130"><\/script>' +
           '</body>'
         );
 
