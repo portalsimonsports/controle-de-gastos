@@ -1,0 +1,95 @@
+/* Controles compactos dos dois bilhetes em uma única linha no computador. */
+
+#viewBus .bus-compact-controls {
+  display: grid;
+  grid-template-columns:
+    minmax(145px, .7fr)
+    minmax(190px, 1fr)
+    auto
+    minmax(190px, 1fr)
+    auto;
+  gap: 10px;
+  align-items: end;
+}
+
+#viewBus .bus-compact-controls > * {
+  grid-column: auto !important;
+  min-width: 0;
+}
+
+#viewBus .bus-compact-controls .actions {
+  flex-wrap: nowrap;
+  align-items: end;
+}
+
+#viewBus .bus-compact-controls .btn,
+#viewFidelity .fidelity-compact-controls .btn {
+  min-height: 40px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+#viewBus .bus-compact-controls input,
+#viewFidelity .fidelity-compact-controls input {
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+#viewBus .bus-hidden-control {
+  display: none !important;
+}
+
+#viewFidelity .fidelity-compact-controls {
+  display: grid;
+  grid-template-columns:
+    minmax(145px, .7fr)
+    minmax(180px, 1fr)
+    auto
+    auto
+    minmax(190px, 1fr)
+    auto;
+  gap: 10px;
+  align-items: end;
+}
+
+#viewFidelity .fidelity-compact-controls > * {
+  min-width: 0;
+}
+
+#viewFidelity .fidelity-compact-controls .fidelity-actions {
+  flex-wrap: nowrap;
+  align-items: end;
+}
+
+#viewFidelity .fidelity-balance-field input {
+  font-weight: 700;
+}
+
+@media (max-width: 1050px) {
+  #viewBus .bus-compact-controls,
+  #viewFidelity .fidelity-compact-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #viewBus .bus-compact-controls .actions,
+  #viewFidelity .fidelity-compact-controls .fidelity-actions {
+    align-self: end;
+  }
+}
+
+@media (max-width: 700px) {
+  #viewBus .bus-compact-controls,
+  #viewFidelity .fidelity-compact-controls {
+    grid-template-columns: 1fr;
+  }
+
+  #viewBus .bus-compact-controls .actions,
+  #viewFidelity .fidelity-compact-controls .fidelity-actions {
+    width: 100%;
+  }
+
+  #viewBus .bus-compact-controls .btn,
+  #viewFidelity .fidelity-compact-controls .btn {
+    width: 100%;
+  }
+}
