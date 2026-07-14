@@ -1,0 +1,63 @@
+/* Menus sempre em uma única linha, com rolagem horizontal se necessário. */
+.tabs {
+  flex-wrap: nowrap !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+
+.tabs .tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Colunas uniformes e todo o conteúdo centralizado sob os títulos. */
+#viewBus .table-wrap,
+#viewFidelity .table-wrap {
+  overflow-x: auto;
+}
+
+#viewBus table,
+#viewFidelity table {
+  width: 100%;
+  min-width: 900px;
+  table-layout: fixed;
+}
+
+#viewBus th,
+#viewBus td,
+#viewFidelity th,
+#viewFidelity td {
+  width: 16.666666%;
+  text-align: center !important;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+#viewBus th,
+#viewFidelity th {
+  white-space: normal;
+}
+
+#viewBus .bus-row-actions,
+#viewFidelity .bus-row-actions,
+#viewFidelity .fidelity-row-actions {
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+/* Mantém os campos dos bilhetes alinhados em desktop. */
+#viewBus > .grid,
+.fidelity-panel {
+  align-items: end;
+}
+
+@media (max-width: 700px) {
+  #viewBus table,
+  #viewFidelity table {
+    min-width: 780px;
+  }
+}
