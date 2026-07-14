@@ -70,6 +70,11 @@
     prepareMoneyInput(document.getElementById('editExpenseValue'));
   }
 
+  function fieldValue(id, fallback) {
+    const field = document.getElementById(id);
+    return field ? field.value : fallback;
+  }
+
   function validateCommon(params, numericValue) {
     return Boolean(
       params.data &&
@@ -78,6 +83,18 @@
       numericValue > 0 &&
       params.refCartao
     );
+  }
+
+  function validateRecurrence(params) {
+    if (params.recorrenteSN !== 'true') return true;
+
+    const interval = Number(params.intervaloMeses || 0);
+    const count = Number(params.repeticoes || 0);
+
+    return Number.isInteger(interval) &&
+      interval >= 1 &&
+      Number.isInteger(count) &&
+      count >= 1;
   }
 
   async function saveNewExpense(button) {
@@ -94,11 +111,20 @@
       refCartao: document.getElementById('expenseCard').value,
       nParcelas: document.getElementById('expenseInstallments').value,
       divididoSN: document.getElementById('expenseDivided').value,
-      modoData: document.getElementById('expenseMode').value
+      modoData: document.getElementById('expenseMode').value,
+      recorrenteSN: fieldValue('expenseRecurring', 'false'),
+      intervaloMeses: fieldValue('expenseRecurrenceInterval', '1'),
+      repeticoes: fieldValue('expenseRecurrenceCount', '1'),
+      conta: fieldValue('expenseAccount', 'PESSOAL')
     };
 
     if (!validateCommon(params, numericValue)) {
       toast('Preencha data, descrição, valor e cartão.', 'error');
+      return;
+    }
+
+    if (!validateRecurrence(params)) {
+      toast('Informe o intervalo e a quantidade de repetições.', 'error');
       return;
     }
 
@@ -114,6 +140,10 @@
         clearExpense();
       } else {
         valueInput.value = '';
+      }
+
+      if (typeof window.resetExpenseExtras === 'function') {
+        window.resetExpenseExtras();
       }
     } catch (error) {
       toast(error.message, 'error');
