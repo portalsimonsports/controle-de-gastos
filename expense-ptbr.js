@@ -68,6 +68,7 @@
   function prepareInputs() {
     prepareMoneyInput(document.getElementById('expenseValue'));
     prepareMoneyInput(document.getElementById('editExpenseValue'));
+    prepareMoneyInput(document.getElementById('juniorValue'));
   }
 
   function fieldValue(id, fallback) {
@@ -115,7 +116,7 @@
       recorrenteSN: fieldValue('expenseRecurring', 'false'),
       intervaloMeses: fieldValue('expenseRecurrenceInterval', '1'),
       repeticoes: fieldValue('expenseRecurrenceCount', '1'),
-      conta: fieldValue('expenseAccount', 'PESSOAL')
+      responsavel: fieldValue('expenseAccount', 'PESSOAL')
     };
 
     if (!validateCommon(params, numericValue)) {
