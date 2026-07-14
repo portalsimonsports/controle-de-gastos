@@ -1,7 +1,10 @@
 'use strict';
 
 (function () {
-  function canInsertCalendar() {
+  let editingCalendarRow = 0;
+  let calendarRecordMap = {};
+
+  function canManageCalendar() {
     return state.role === 'admin' || state.role === 'editor';
   }
 
@@ -28,9 +31,9 @@
       panel.className = 'calendar-entry-panel';
 
       panel.innerHTML = [
-        '<h4>Novo registro</h4>',
-        '<div class="grid">',
-        '<div class="col-6">',
+        '<h4 id="calendarEntryTitle">Novo registro</h4>',
+        '<div class="calendar-entry-row">',
+        '<div class="calendar-entry-type">',
         '<label for="calendarEntryType">Tipo</label>',
         '<input id="calendarEntryType" ',
         'list="calendarEntryTypeList" ',
@@ -38,24 +41,24 @@
         'placeholder="Selecione ou digite um novo tipo" ',
         'autocomplete="off">',
         '<datalist id="calendarEntryTypeList"></datalist>',
-        '<p class="calendar-entry-hint">',
-        'A lista é carregada da coluna K. ',
-        'Também é possível digitar um novo tipo.',
-        '</p>',
         '</div>',
-        '<div class="col-3">',
+        '<div class="calendar-entry-date">',
         '<label for="calendarEntryDate">',
         'Data da última troca',
         '</label>',
         '<input type="date" id="calendarEntryDate">',
         '</div>',
-        '<div class="col-3 actions">',
+        '<div class="calendar-entry-actions">',
         '<button type="button" class="btn" ',
         'id="calendarEntrySave">Gravar</button>',
         '<button type="button" class="btn ghost" ',
         'id="calendarEntryClear">Limpar</button>',
         '</div>',
-        '</div>'
+        '</div>',
+        '<p class="calendar-entry-hint">',
+        'A lista é carregada da coluna K. ',
+        'Também é possível digitar um novo tipo.',
+        '</p>'
       ].join('');
 
       const tableWrap = view.querySelector('.table-wrap');
@@ -101,12 +104,101 @@
     input.value = current;
   }
 
+  function setCalendarEditMode(record) {
+    editingCalendarRow = record ? Number(record.linha) : 0;
+
+    const title = document.getElementById('calendarEntryTitle');
+    const saveButton = document.getElementById('calendarEntrySave');
+    const clearButton = document.getElementById('calendarEntryClear');
+
+    if (editingCalendarRow) {
+      title.textContent =
+        'Editar registro — linha ' + editingCalendarRow;
+      saveButton.textContent = 'Salvar';
+      clearButton.textContent = 'Cancelar';
+    } else {
+      title.textContent = 'Novo registro';
+      saveButton.textContent = 'Gravar';
+      clearButton.textContent = 'Limpar';
+    }
+  }
+
   function clearCalendarEntry() {
     const type = document.getElementById('calendarEntryType');
     const date = document.getElementById('calendarEntryDate');
 
     if (type) type.value = '';
     if (date) date.value = localIso();
+
+    setCalendarEditMode(null);
+  }
+
+  function openCalendarEditor(record) {
+    const panel = ensureCalendarEntryPanel();
+
+    document.getElementById('calendarEntryType').value =
+      record.tipo || '';
+
+    document.getElementById('calendarEntryDate').value =
+      record.dataIso || '';
+
+    setCalendarEditMode(record);
+
+    panel.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+
+    setTimeout(function () {
+      document.getElementById('calendarEntryType').focus();
+    }, 250);
+  }
+
+  function createCalendarActionButton(
+    label,
+    className,
+    handler
+  ) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.className = className;
+    button.addEventListener('click', handler);
+    return button;
+  }
+
+  function appendCalendarActions(row, record) {
+    const cell = document.createElement('td');
+    cell.className = 'calendar-actions-cell';
+
+    if (record) {
+      const actions = document.createElement('div');
+      actions.className = 'calendar-row-actions';
+
+      actions.appendChild(
+        createCalendarActionButton(
+          'Editar',
+          'calendar-action-btn calendar-edit-btn',
+          function () {
+            openCalendarEditor(record);
+          }
+        )
+      );
+
+      actions.appendChild(
+        createCalendarActionButton(
+          'Excluir',
+          'calendar-action-btn calendar-delete-btn',
+          function () {
+            deleteCalendarEntry(record);
+          }
+        )
+      );
+
+      cell.appendChild(actions);
+    }
+
+    row.appendChild(cell);
   }
 
   function renderCalendarResult(result) {
@@ -120,9 +212,22 @@
     body.innerHTML = '';
 
     const rows = Array.isArray(result.rows) ? result.rows : [];
+    const records = Array.isArray(result.registros)
+      ? result.registros
+      : [];
+
+    const showActions =
+      canManageCalendar() &&
+      result.permiteEditar !== false;
+
+    calendarRecordMap = {};
+
+    records.forEach(function (record) {
+      calendarRecordMap[String(record.linha)] = record;
+    });
 
     if (!rows.length) {
-      emptyRow(body, 1);
+      emptyRow(body, showActions ? 8 : 7);
       return;
     }
 
@@ -139,21 +244,46 @@
       headerRow.appendChild(th);
     });
 
+    if (showActions) {
+      const actionTopHeader = document.createElement('th');
+      actionTopHeader.textContent = '';
+      actionTopHeader.className = 'calendar-actions-cell';
+      headerRow.appendChild(actionTopHeader);
+    }
+
     head.appendChild(headerRow);
 
-    rows.slice(1).forEach(function (values) {
+    rows.slice(1).forEach(function (values, index) {
+      const sheetRow = index + 2;
+      const record = calendarRecordMap[String(sheetRow)];
       const row = document.createElement('tr');
 
-      values.forEach(function (value, index) {
+      values.forEach(function (value, columnIndex) {
         const cell = document.createElement('td');
         cell.textContent = value == null ? '' : value;
 
-        if (index >= 2 && index <= 6) {
+        if (columnIndex >= 2 && columnIndex <= 6) {
           cell.classList.add('calendar-centered-column');
+        }
+
+        if (sheetRow === 2) {
+          cell.classList.add('calendar-data-header');
         }
 
         row.appendChild(cell);
       });
+
+      if (showActions) {
+        if (sheetRow === 2) {
+          const headerCell = document.createElement('td');
+          headerCell.textContent = 'Ações';
+          headerCell.className =
+            'calendar-actions-cell calendar-data-header';
+          row.appendChild(headerCell);
+        } else {
+          appendCalendarActions(row, record);
+        }
+      }
 
       body.appendChild(row);
     });
@@ -173,7 +303,7 @@
 
       if (panel) {
         panel.hidden = !(
-          canInsertCalendar() &&
+          canManageCalendar() &&
           result.permiteInserir !== false
         );
 
@@ -208,10 +338,7 @@
     typeInput.value = type;
 
     if (!type || !date) {
-      toast(
-        'Informe o tipo e a data.',
-        'error'
-      );
+      toast('Informe o tipo e a data.', 'error');
       return;
     }
 
@@ -219,24 +346,35 @@
       'calendarEntrySave'
     );
 
-    const originalText = button.textContent;
     button.disabled = true;
-    button.textContent = 'Gravando...';
+    button.textContent = editingCalendarRow
+      ? 'Salvando...'
+      : 'Gravando...';
 
     try {
-      const result = await call(
-        'calendarSave',
-        {
-          token: state.token,
-          tipo: type,
-          data: date
-        },
-        false
-      );
+      const action = editingCalendarRow
+        ? 'calendarUpdate'
+        : 'calendarSave';
+
+      const params = {
+        token: state.token,
+        tipo: type,
+        data: date
+      };
+
+      if (editingCalendarRow) {
+        params.linha = editingCalendarRow;
+      }
+
+      const result = await call(action, params, false);
 
       toast(
         result.msg ||
-        'Registro do Calendário gravado.'
+        (
+          editingCalendarRow
+            ? 'Registro do Calendário atualizado.'
+            : 'Registro do Calendário gravado.'
+        )
       );
 
       clearCalendarEntry();
@@ -245,7 +383,47 @@
       toast(error.message, 'error');
     } finally {
       button.disabled = false;
-      button.textContent = originalText;
+      button.textContent = editingCalendarRow
+        ? 'Salvar'
+        : 'Gravar';
+    }
+  }
+
+  async function deleteCalendarEntry(record) {
+    const confirmed = window.confirm(
+      'Excluir este registro do Calendário?\n\n' +
+      record.tipo +
+      '\nData: ' +
+      record.data +
+      '\nLinha: ' +
+      record.linha +
+      '\n\nA linha será esvaziada sem deslocar os demais registros.'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const result = await call(
+        'calendarDelete',
+        {
+          token: state.token,
+          linha: record.linha
+        },
+        false
+      );
+
+      toast(
+        result.msg ||
+        'Registro do Calendário excluído.'
+      );
+
+      if (editingCalendarRow === Number(record.linha)) {
+        clearCalendarEntry();
+      }
+
+      await enhancedLoadCalendar();
+    } catch (error) {
+      toast(error.message, 'error');
     }
   }
 
