@@ -1,9 +1,8 @@
-/* Página mais ampla no computador. */
+/* Página ampla no computador e menus em uma única linha. */
 .shell {
   width: min(1520px, calc(100% - 24px));
 }
 
-/* Menus sempre na mesma linha. */
 .tabs {
   display: flex;
   flex-wrap: nowrap !important;
@@ -25,13 +24,12 @@
   white-space: nowrap;
 }
 
-/* Remove as mensagens de contagem que não acrescentam informação. */
 #busInfo,
 #fidelityStatus {
   display: none !important;
 }
 
-/* Colunas uniformes e centralizadas no computador. */
+/* A, B, C, E, F e G + Ações. */
 #viewBus .table-wrap,
 #viewFidelity .table-wrap {
   overflow-x: auto;
@@ -40,7 +38,7 @@
 #viewBus table,
 #viewFidelity table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1050px;
   table-layout: fixed;
 }
 
@@ -48,7 +46,7 @@
 #viewBus td,
 #viewFidelity th,
 #viewFidelity td {
-  width: 16.666666%;
+  width: 14.285714%;
   text-align: center !important;
   vertical-align: middle;
   overflow-wrap: anywhere;
@@ -71,8 +69,6 @@
   align-items: end;
 }
 
-/* No celular cada lançamento vira um cartão completo.
-   Assim todos os dados aparecem sem rolagem horizontal. */
 @media (max-width: 700px) {
   .shell {
     width: calc(100% - 12px);
@@ -154,7 +150,7 @@
 
   #viewBus tbody td:nth-child(1)::before,
   #viewFidelity tbody td:nth-child(1)::before {
-    content: "Data e hora";
+    content: "Data";
   }
 
   #viewBus tbody td:nth-child(2)::before,
@@ -164,34 +160,33 @@
 
   #viewBus tbody td:nth-child(3)::before,
   #viewFidelity tbody td:nth-child(3)::before {
-    content: "Quantidade";
+    content: "Total";
   }
 
   #viewBus tbody td:nth-child(4)::before,
   #viewFidelity tbody td:nth-child(4)::before {
-    content: "Valor unitário";
+    content: "Hora";
   }
 
   #viewBus tbody td:nth-child(5)::before,
   #viewFidelity tbody td:nth-child(5)::before {
-    content: "Recarga";
+    content: "Valor unitário";
   }
 
   #viewBus tbody td:nth-child(6)::before,
   #viewFidelity tbody td:nth-child(6)::before {
+    content: "Recarga";
+  }
+
+  #viewBus tbody td:nth-child(7)::before,
+  #viewFidelity tbody td:nth-child(7)::before {
     content: "Ações";
   }
 
-  #viewBus tbody td:nth-child(5),
-  #viewBus tbody td:nth-child(6),
-  #viewFidelity tbody td:nth-child(5),
-  #viewFidelity tbody td:nth-child(6) {
-    border-bottom: 0;
-  }
-
-  #viewBus tbody td:nth-child(6),
-  #viewFidelity tbody td:nth-child(6) {
+  #viewBus tbody td:nth-child(7),
+  #viewFidelity tbody td:nth-child(7) {
     grid-column: 1 / -1;
+    border-bottom: 0;
   }
 
   #viewBus tbody td.empty,
