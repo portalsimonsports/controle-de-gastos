@@ -95,10 +95,9 @@
           { token: state.token },
           false
         ).catch(function (error) {
-          toast(
-            'A despesa foi gravada, mas a organização automática falhou: ' +
-              error.message,
-            'error'
+          console.error(
+            'Falha ao organizar despesas em segundo plano:',
+            error
           );
         });
       }, 0);
