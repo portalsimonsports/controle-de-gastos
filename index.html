@@ -15,7 +15,22 @@
   <div class="carregando">Carregando…</div>
 
   <script>
-    fetch('./app.html?v=202607211045', {cache:'no-store'})
+    /*
+     * Sessão do Controle de Gastos:
+     * - o backend continua sendo a autoridade e expira o token em 15 horas;
+     * - o navegador passa a persistir o token em localStorage, portanto fechar
+     *   a aba ou o navegador não encerra a autorização antes das 15 horas;
+     * - sessões antigas ainda guardadas em sessionStorage são migradas uma vez.
+     */
+    try {
+      var tokenAntigo = sessionStorage.getItem('cg_token');
+      if (!localStorage.getItem('cg_token') && tokenAntigo) {
+        localStorage.setItem('cg_token', tokenAntigo);
+      }
+      sessionStorage.removeItem('cg_token');
+    } catch (_) {}
+
+    fetch('./app.html?v=202609020541', {cache:'no-store'})
       .then(function(resposta){
         if(!resposta.ok){
           throw new Error('Falha ao carregar o sistema.');
@@ -37,6 +52,17 @@
           /\s*<p class="muted small">\s*O backend grava somente as colunas A:H da aba Despesas\.\s*<\/p>/i,
           ''
         );
+
+        /*
+         * O app original usa sessionStorage para cg_token. Aqui alteramos
+         * somente o armazenamento do token para localStorage. O restante do
+         * estado temporário (por exemplo, a aba atual) continua em
+         * sessionStorage e não tem seu comportamento alterado.
+         */
+        html = html
+          .replace(/sessionStorage\.getItem\(['\"]cg_token['\"]\)/g, "localStorage.getItem('cg_token')")
+          .replace(/sessionStorage\.setItem\(['\"]cg_token['\"]\s*,/g, "localStorage.setItem('cg_token',")
+          .replace(/sessionStorage\.removeItem\(['\"]cg_token['\"]\)/g, "localStorage.removeItem('cg_token')");
 
         html = html.replace(
           '</head>',
