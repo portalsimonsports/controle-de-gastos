@@ -15,13 +15,6 @@
   <div class="carregando">Carregando…</div>
 
   <script>
-    /*
-     * Sessão do Controle de Gastos:
-     * - o backend continua sendo a autoridade e expira o token em 15 horas;
-     * - o navegador passa a persistir o token em localStorage, portanto fechar
-     *   a aba ou o navegador não encerra a autorização antes das 15 horas;
-     * - sessões antigas ainda guardadas em sessionStorage são migradas uma vez.
-     */
     try {
       var tokenAntigo = sessionStorage.getItem('cg_token');
       if (!localStorage.getItem('cg_token') && tokenAntigo) {
@@ -30,7 +23,7 @@
       sessionStorage.removeItem('cg_token');
     } catch (_) {}
 
-    fetch('./app.html?v=202609230810', {cache:'no-store'})
+    fetch('./app.html?v=202609230820', {cache:'no-store'})
       .then(function(resposta){
         if(!resposta.ok){
           throw new Error('Falha ao carregar o sistema.');
@@ -53,12 +46,6 @@
           ''
         );
 
-        /*
-         * O app original usa sessionStorage para cg_token. Aqui alteramos
-         * somente o armazenamento do token para localStorage. O restante do
-         * estado temporário (por exemplo, a aba atual) continua em
-         * sessionStorage e não tem seu comportamento alterado.
-         */
         html = html
           .replace(/sessionStorage\.getItem\(['\"]cg_token['\"]\)/g, "localStorage.getItem('cg_token')")
           .replace(/sessionStorage\.setItem\(['\"]cg_token['\"]\s*,/g, "localStorage.setItem('cg_token',")
@@ -72,7 +59,7 @@
 
         html = html.replace(
           '</body>',
-          '<script src="./api-timeout-fix.js?v=202607211045"><\/script><script src="./fast-save-ui.js?v=202609230810"><\/script><script src="./enhancements.js?v=202607142115"><\/script><script src="./query-description.js?v=202608010610"><\/script><script src="./calendar-enhancements.js?v=202607142115"><\/script><script src="./calendar-list-picker.js?v=202608020545"><\/script><script src="./professional-confirm.js?v=202607142115"><\/script><script src="./card-period.js?v=202607142115"><\/script><script src="./fidelity.js?v=202607142115"><\/script><script src="./fidelity-save-fix.js?v=202608190530"><\/script><script src="./bus-actions.js?v=202607142115"><\/script><script src="./bilhete-columns.js?v=202607142115"><\/script><script src="./bilhete-controls.js?v=202607142115"><\/script><script src="./junior-recorrencia.js?v=202607142115"><\/script><script src="./expense-ptbr.js?v=202607142115"><\/script><script src="./expense-auto-cents.js?v=202608020818"><\/script><script src="./bilhete-delete-fix.js?v=202607142115"><\/script><script src="./mobile-data-fix.js?v=202607142115"><\/script><script src="./bus-null-fix.js?v=202607142115"><\/script><script src="./expense-view-mode.js?v=202607161030"><\/script><script src="./finance-tools.js?v=202609230810"><\/script>' +
+          '<script src="./api-timeout-fix.js?v=202607211045"><\/script><script src="./fast-save-ui.js?v=202609230810"><\/script><script src="./enhancements.js?v=202607142115"><\/script><script src="./query-description.js?v=202608010610"><\/script><script src="./calendar-enhancements.js?v=202607142115"><\/script><script src="./calendar-list-picker.js?v=202608020545"><\/script><script src="./professional-confirm.js?v=202607142115"><\/script><script src="./card-period.js?v=202607142115"><\/script><script src="./fidelity.js?v=202607142115"><\/script><script src="./fidelity-save-fix.js?v=202608190530"><\/script><script src="./bus-actions.js?v=202607142115"><\/script><script src="./bilhete-columns.js?v=202607142115"><\/script><script src="./bilhete-controls.js?v=202607142115"><\/script><script src="./junior-recorrencia.js?v=202607142115"><\/script><script src="./expense-ptbr.js?v=202607142115"><\/script><script src="./expense-auto-cents.js?v=202608020818"><\/script><script src="./bilhete-delete-fix.js?v=202607142115"><\/script><script src="./mobile-data-fix.js?v=202607142115"><\/script><script src="./bus-null-fix.js?v=202607142115"><\/script><script src="./expense-view-mode.js?v=202607161030"><\/script><script src="./finance-tools-v2.js?v=202609230820"><\/script>' +
           '</body>'
         );
 
