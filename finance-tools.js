@@ -2,12 +2,16 @@
 
 (function () {
   const $id = id => document.getElementById(id);
+  let structureInstalled = false;
+  let tabsRendered = false;
+
   const numberPt = value => {
     if (typeof value === 'number') return value;
     const raw = String(value ?? '').trim().replace(/R\$/gi, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
     const n = Number(raw);
     return Number.isFinite(n) ? n : 0;
   };
+
   const moneyPt = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
   function dateIso(d) {
@@ -35,7 +39,9 @@
   }
 
   function installTabsAndViews() {
+    if (structureInstalled) return true;
     if (!Array.isArray(window.tabs) && typeof tabs === 'undefined') return false;
+
     const tabsRef = typeof tabs !== 'undefined' ? tabs : window.tabs;
     if (!tabsRef.some(item => item.id === 'viewRefunds')) {
       tabsRef.splice(2, 0, { id: 'viewRefunds', label: 'Estorno / Devolução', roles: ['admin', 'editor'] });
@@ -79,7 +85,7 @@
             <div class="col-6"><label for="refundReason">Motivo / observação</label><input id="refundReason" maxlength="120" placeholder="Ex.: compra cancelada, produto devolvido"></div>
             <div class="col-12 refund-actions"><button class="btn" id="refundSave">Gravar estorno</button><button class="btn ghost" id="refundClear">Cancelar seleção</button></div>
           </div>
-          <p class="muted small">A compra original permanece intacta. O estorno é enviado como novo movimento negativo e identificado pelo código da compra selecionada.</p>
+          <p class="muted small">A compra original permanece intacta. O estorno é gravado como novo movimento negativo vinculado à compra selecionada.</p>
         </div>`;
       privateView.appendChild(article);
     }
@@ -105,6 +111,7 @@
       privateView.appendChild(article);
     }
 
+    structureInstalled = true;
     return true;
   }
 
@@ -128,7 +135,10 @@
       const description = String(item.descricao || '');
       const match = description.match(/^ESTORNO\s+\[([A-Z0-9]+)\]/i);
       const value = numberPt(item.valor);
-      if (match && value < 0) map.set(match[1].toUpperCase(), (map.get(match[1].toUpperCase()) || 0) + Math.abs(value));
+      if (match && value < 0) {
+        const key = match[1].toUpperCase();
+        map.set(key, (map.get(key) || 0) + Math.abs(value));
+      }
     });
     refundState.estornos = map;
   }
@@ -140,10 +150,16 @@
 
   function filterPurchases() {
     const q = String($id('refundSearch')?.value || '').trim().toLowerCase();
+    const start = $id('refundStart')?.value || '';
+    const end = $id('refundEnd')?.value || '';
+
     return refundState.rows.filter(item => {
       const value = numberPt(item.valor);
       const description = String(item.descricao || '');
+      const itemDate = normalizeDate(item.data);
       if (value <= 0 || /^ESTORNO\s+\[/i.test(description)) return false;
+      if (start && itemDate && itemDate < start) return false;
+      if (end && itemDate && itemDate > end) return false;
       if (!q) return true;
       return [item.data, item.descricao, item.cartao, item.ref, String(item.valor)].some(v => String(v || '').toLowerCase().includes(q));
     });
@@ -155,18 +171,39 @@
     const purchases = filterPurchases();
     $id('refundCount').textContent = String(purchases.length);
     body.innerHTML = '';
+
     if (!purchases.length) {
       const tr = document.createElement('tr');
-      const td = document.createElement('td'); td.colSpan = 5; td.className = 'empty'; td.textContent = 'Nenhuma compra encontrada no período.'; tr.appendChild(td); body.appendChild(tr);
+      const td = document.createElement('td');
+      td.colSpan = 5;
+      td.className = 'empty';
+      td.textContent = 'Nenhuma compra encontrada no período.';
+      tr.appendChild(td);
+      body.appendChild(tr);
       return;
     }
+
     purchases.forEach(item => {
       const key = refundKey(item);
       const tr = document.createElement('tr');
       if (refundState.selected && refundKey(refundState.selected) === key) tr.className = 'refund-row-selected';
-      [item.data || '', item.descricao || '', item.cartao || ''].forEach(text => { const td = document.createElement('td'); td.textContent = text; tr.appendChild(td); });
-      const tdValue = document.createElement('td'); tdValue.className = 'right'; tdValue.textContent = moneyPt(item.valor); tr.appendChild(tdValue);
-      const tdAction = document.createElement('td'); const button = document.createElement('button'); button.className = 'btn ghost'; button.textContent = 'Selecionar'; button.addEventListener('click', () => selectRefund(item)); tdAction.appendChild(button); tr.appendChild(tdAction);
+      [item.data || '', item.descricao || '', item.cartao || ''].forEach(text => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+      const tdValue = document.createElement('td');
+      tdValue.className = 'right';
+      tdValue.textContent = moneyPt(item.valor);
+      tr.appendChild(tdValue);
+
+      const tdAction = document.createElement('td');
+      const button = document.createElement('button');
+      button.className = 'btn ghost';
+      button.textContent = 'Selecionar';
+      button.addEventListener('click', () => selectRefund(item));
+      tdAction.appendChild(button);
+      tr.appendChild(tdAction);
       body.appendChild(tr);
     });
   }
@@ -198,8 +235,11 @@
     const start = $id('refundStart').value;
     const end = $id('refundEnd').value;
     if (!start || !end) return toast('Informe o período das compras.', 'error');
+
     try {
-      const result = await call('listDespesas', { token: state.token, inicio: start, fim: end });
+      const today = dateIso(new Date());
+      const auditEnd = end > today ? end : today;
+      const result = await call('listDespesas', { token: state.token, inicio: start, fim: auditEnd });
       refundState.rows = Array.isArray(result.rows) ? result.rows : [];
       computeRefunds(refundState.rows);
       clearRefundSelection();
@@ -212,11 +252,13 @@
   async function saveRefund() {
     const item = refundState.selected;
     if (!item) return toast('Selecione a compra que será estornada.', 'error');
+
     const available = availableFor(item);
     const value = numberPt($id('refundValue').value);
     const date = $id('refundDate').value;
     const reason = String($id('refundReason').value || '').trim();
     const cardRef = cardRefFor(item);
+
     if (!date || value <= 0) return toast('Informe a data e o valor do estorno.', 'error');
     if (value > available + 0.0001) return toast(`O máximo disponível para esta compra é ${moneyPt(available)}.`, 'error');
     if (!cardRef) return toast('Não foi possível identificar o cartão da compra original.', 'error');
@@ -227,6 +269,7 @@
     const oldText = button.textContent;
     button.disabled = true;
     button.textContent = 'Gravando...';
+
     try {
       const result = await call('saveDespesa', {
         token: state.token,
@@ -241,11 +284,10 @@
         compraOrigem: key,
         adiarOrdenacaoFinal: 'true'
       }, false);
+
       toast(result.msg || 'Estorno gravado.');
       await loadRefundPurchases();
-      if (typeof call === 'function') {
-        setTimeout(() => call('organizarDespesas', { token: state.token }, false).catch(() => {}), 1800);
-      }
+      setTimeout(() => call('organizarDespesas', { token: state.token }, false).catch(() => {}), 8000);
     } catch (error) {
       toast(error.message, 'error');
     } finally {
@@ -255,18 +297,46 @@
   }
 
   let calcExpr = '';
-  function calcDisplay(text) { if ($id('calcDisplay')) $id('calcDisplay').value = text || '0'; }
+
+  function calcDisplay(text) {
+    if ($id('calcDisplay')) $id('calcDisplay').value = text || '0';
+  }
+
   function safeEvaluate(expr) {
     if (!expr || !/^[0-9+\-*/().\s]+$/.test(expr)) throw new Error('Expressão inválida');
     return Function(`"use strict"; return (${expr})`)();
   }
+
   function calcAction(action) {
     try {
-      if (action === 'clear') { calcExpr = ''; calcDisplay('0'); return; }
-      if (action === 'back') { calcExpr = calcExpr.slice(0, -1); calcDisplay(calcExpr || '0'); return; }
-      if (action === 'percent') { const value = Number(safeEvaluate(calcExpr || '0')) / 100; calcExpr = String(value); calcDisplay(calcExpr); return; }
-      if (action === '=') { const value = safeEvaluate(calcExpr || '0'); if (!Number.isFinite(value)) throw new Error('Resultado inválido'); calcExpr = String(value); calcDisplay(calcExpr.replace('.', ',')); return; }
-      if (action === 'copy') { navigator.clipboard?.writeText(String($id('calcDisplay').value || '0')); toast('Resultado copiado.'); return; }
+      if (action === 'clear') {
+        calcExpr = '';
+        calcDisplay('0');
+        return;
+      }
+      if (action === 'back') {
+        calcExpr = calcExpr.slice(0, -1);
+        calcDisplay(calcExpr || '0');
+        return;
+      }
+      if (action === 'percent') {
+        const value = Number(safeEvaluate(calcExpr || '0')) / 100;
+        calcExpr = String(value);
+        calcDisplay(calcExpr.replace('.', ','));
+        return;
+      }
+      if (action === '=') {
+        const value = safeEvaluate(calcExpr || '0');
+        if (!Number.isFinite(value)) throw new Error('Resultado inválido');
+        calcExpr = String(value);
+        calcDisplay(calcExpr.replace('.', ','));
+        return;
+      }
+      if (action === 'copy') {
+        navigator.clipboard?.writeText(String($id('calcDisplay').value || '0'));
+        toast('Resultado copiado.');
+        return;
+      }
       calcExpr += action;
       calcDisplay(calcExpr.replace(/\*/g, '×').replace(/\//g, '÷').replace(/\./g, ','));
     } catch (_) {
@@ -276,11 +346,38 @@
   }
 
   function bind() {
-    const load = $id('refundLoad'); if (load && !load.dataset.bound) { load.dataset.bound = '1'; load.addEventListener('click', loadRefundPurchases); }
-    const search = $id('refundSearch'); if (search && !search.dataset.bound) { search.dataset.bound = '1'; search.addEventListener('input', renderRefunds); }
-    const save = $id('refundSave'); if (save && !save.dataset.bound) { save.dataset.bound = '1'; save.addEventListener('click', saveRefund); }
-    const clear = $id('refundClear'); if (clear && !clear.dataset.bound) { clear.dataset.bound = '1'; clear.addEventListener('click', clearRefundSelection); }
-    const grid = $id('calcGrid'); if (grid && !grid.dataset.bound) { grid.dataset.bound = '1'; grid.addEventListener('click', event => { const button = event.target.closest('[data-calc]'); if (button) calcAction(button.dataset.calc); }); }
+    const load = $id('refundLoad');
+    if (load && !load.dataset.bound) {
+      load.dataset.bound = '1';
+      load.addEventListener('click', loadRefundPurchases);
+    }
+
+    const search = $id('refundSearch');
+    if (search && !search.dataset.bound) {
+      search.dataset.bound = '1';
+      search.addEventListener('input', renderRefunds);
+    }
+
+    const save = $id('refundSave');
+    if (save && !save.dataset.bound) {
+      save.dataset.bound = '1';
+      save.addEventListener('click', saveRefund);
+    }
+
+    const clear = $id('refundClear');
+    if (clear && !clear.dataset.bound) {
+      clear.dataset.bound = '1';
+      clear.addEventListener('click', clearRefundSelection);
+    }
+
+    const grid = $id('calcGrid');
+    if (grid && !grid.dataset.bound) {
+      grid.dataset.bound = '1';
+      grid.addEventListener('click', event => {
+        const button = event.target.closest('[data-calc]');
+        if (button) calcAction(button.dataset.calc);
+      });
+    }
   }
 
   function initDefaults() {
@@ -295,7 +392,11 @@
     if (!installTabsAndViews()) return;
     bind();
     initDefaults();
-    if (typeof renderTabs === 'function' && state?.token) renderTabs();
+
+    if (!tabsRendered && typeof renderTabs === 'function' && typeof state !== 'undefined' && state?.token) {
+      tabsRendered = true;
+      renderTabs();
+    }
   }
 
   install();
