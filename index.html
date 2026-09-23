@@ -5,17 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
   <title>Controle de Gastos</title>
-  <meta http-equiv="refresh" content="0; url=./app.html?v=202609231015">
   <style>
     html,body{width:100%;height:100%;margin:0;background:#0c1422;color:#eef4ff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
     body{display:grid;place-items:center}
-    .box{padding:16px 20px;border:1px solid #263754;border-radius:14px;background:#121d30}
+    .box{padding:16px 20px;border:1px solid #263754;border-radius:14px;background:#121d30;text-align:center}
+    a{color:#8db6ff}
   </style>
 </head>
 <body>
-  <div class="box">Abrindo Controle de Gastos…</div>
+  <div class="box">Abrindo Controle de Gastos…<br><small>Se não abrir automaticamente, <a id="direct" href="./app.html?build=202609231018">clique aqui</a>.</small></div>
   <script>
-    location.replace('./app.html?v=202609231015');
+    (function(){
+      var target='./app.html?build=202609231018';
+      document.getElementById('direct').href=target;
+      window.location.replace(target);
+    })();
   </script>
 </body>
 </html>
