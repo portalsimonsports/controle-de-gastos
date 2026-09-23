@@ -30,15 +30,18 @@
   function normalizeUi(){
     const value=$('refundValue');
     if(value){
-      value.removeAttribute('max');
-      value.removeAttribute('min');
+      if(value.hasAttribute('max')) value.removeAttribute('max');
+      if(value.hasAttribute('min')) value.removeAttribute('min');
     }
     const available=$('refundAvailable');
     if(available){
       const box=available.closest('.finance-tools-kpi');
       const label=box?.querySelector('span');
-      if(label)label.textContent='Valor da compra';
-      if(selected)available.textContent=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(selected.valor||0);
+      if(label && label.textContent!=='Valor da compra') label.textContent='Valor da compra';
+      if(selected){
+        const formatted=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(selected.valor||0);
+        if(available.textContent!==formatted) available.textContent=formatted;
+      }
     }
   }
 
@@ -118,7 +121,9 @@
     });
   },true);
 
-  const observer=new MutationObserver(normalizeUi);
-  observer.observe(document.documentElement,{childList:true,subtree:true});
-  normalizeUi();
+  document.addEventListener('focusin',event=>{
+    if(event.target && event.target.id==='refundValue') normalizeUi();
+  });
+
+  setTimeout(normalizeUi,0);
 })();
