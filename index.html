@@ -23,7 +23,7 @@
       sessionStorage.removeItem('cg_token');
     } catch (_) {}
 
-    fetch('./app.html?v=202609230950', {cache:'no-store'})
+    fetch('./app.html?v=202609230912', {cache:'no-store'})
       .then(function(resposta){
         if(!resposta.ok){
           throw new Error('Falha ao carregar o sistema.');
