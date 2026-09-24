@@ -6,19 +6,51 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Controle de Gastos</title>
   <style>
-    html,body{width:100%;height:100%;margin:0;background:#0c1422;color:#eef4ff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-    body{display:grid;place-items:center}
-    .box{padding:16px 20px;border:1px solid #263754;border-radius:14px;background:#121d30;text-align:center}
-    a{color:#8db6ff}
+    html,body{width:100%;height:100%;margin:0;background:#0c1422;overflow:hidden}
+    #app{position:fixed;inset:0;width:100%;height:100%;border:0;background:#0c1422}
   </style>
 </head>
 <body>
-  <div class="box">Abrindo Controle de Gastos…<br><small>Se não abrir automaticamente, <a id="direct" href="./app.html?build=202609231018">clique aqui</a>.</small></div>
+  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609240550"></iframe>
   <script>
     (function(){
-      var target='./app.html?build=202609231018';
-      document.getElementById('direct').href=target;
-      window.location.replace(target);
+      'use strict';
+      var frame=document.getElementById('app');
+      var KEY='cg_token';
+
+      function copyPersistedToFrame(){
+        try{
+          var persisted=localStorage.getItem(KEY)||'';
+          var win=frame.contentWindow;
+          if(!win)return;
+          var current=win.sessionStorage.getItem(KEY)||'';
+          if(persisted && !current){
+            win.sessionStorage.setItem(KEY,persisted);
+            win.location.reload();
+          }
+        }catch(_){ }
+      }
+
+      function syncFromFrame(){
+        try{
+          var win=frame.contentWindow;
+          if(!win)return;
+          var token=win.sessionStorage.getItem(KEY)||'';
+          var persisted=localStorage.getItem(KEY)||'';
+          if(token && token!==persisted){
+            localStorage.setItem(KEY,token);
+          }else if(!token && persisted){
+            localStorage.removeItem(KEY);
+          }
+        }catch(_){ }
+      }
+
+      frame.addEventListener('load',function(){
+        copyPersistedToFrame();
+        syncFromFrame();
+      });
+
+      setInterval(syncFromFrame,500);
     })();
   </script>
 </body>
