@@ -11,24 +11,43 @@
   </style>
 </head>
 <body>
-  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609240550"></iframe>
+  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609240555"></iframe>
   <script>
     (function(){
       'use strict';
       var frame=document.getElementById('app');
       var KEY='cg_token';
+      var enhanced=false;
+
+      var styles=[
+        'enhancements.css?v=202607142115','calendar-enhancements.css?v=202607142115','professional-confirm.css?v=202607142115',
+        'card-period.css?v=202607142115','fidelity.css?v=202607142115','bus-actions.css?v=202607142115',
+        'bilhetes-layout.css?v=202607142115','bilhete-controls.css?v=202607142115','junior-recorrencia.css?v=202607142115',
+        'mobile-data-fix.css?v=202607142115','finance-tools.css?v=202609230810'
+      ];
+      var scripts=[
+        'api-timeout-fix.js?v=202607211045','fast-save-ui.js?v=202609230810','enhancements.js?v=202607142115',
+        'query-description.js?v=202608010610','calendar-enhancements.js?v=202607142115','calendar-list-picker.js?v=202608020545',
+        'professional-confirm.js?v=202607142115','card-period.js?v=202607142115','fidelity.js?v=202607142115',
+        'fidelity-save-fix.js?v=202608190530','bus-actions.js?v=202607142115','bilhete-columns.js?v=202607142115',
+        'bilhete-controls.js?v=202607142115','junior-recorrencia.js?v=202607142115','expense-ptbr.js?v=202607142115',
+        'expense-auto-cents.js?v=202608020818','bilhete-delete-fix.js?v=202607142115','mobile-data-fix.js?v=202607142115',
+        'bus-null-fix.js?v=202607142115','expense-view-mode.js?v=202607161030','finance-tools-v2.js?v=202609230820',
+        'refund-money-ptbr.js?v=202609230902','refund-origin-fix.js?v=202609230912'
+      ];
 
       function copyPersistedToFrame(){
         try{
           var persisted=localStorage.getItem(KEY)||'';
           var win=frame.contentWindow;
-          if(!win)return;
+          if(!win)return false;
           var current=win.sessionStorage.getItem(KEY)||'';
           if(persisted && !current){
             win.sessionStorage.setItem(KEY,persisted);
-            win.location.reload();
+            return true;
           }
         }catch(_){ }
+        return false;
       }
 
       function syncFromFrame(){
@@ -37,17 +56,38 @@
           if(!win)return;
           var token=win.sessionStorage.getItem(KEY)||'';
           var persisted=localStorage.getItem(KEY)||'';
-          if(token && token!==persisted){
-            localStorage.setItem(KEY,token);
-          }else if(!token && persisted){
-            localStorage.removeItem(KEY);
+          if(token && token!==persisted)localStorage.setItem(KEY,token);
+          if(!token && persisted)localStorage.removeItem(KEY);
+        }catch(_){ }
+      }
+
+      function injectEnhancements(){
+        if(enhanced)return;
+        enhanced=true;
+        try{
+          var doc=frame.contentDocument;
+          if(!doc)return;
+          styles.forEach(function(href){
+            var l=doc.createElement('link'); l.rel='stylesheet'; l.href='./'+href; doc.head.appendChild(l);
+          });
+          var i=0;
+          function next(){
+            if(i>=scripts.length)return;
+            var s=doc.createElement('script');
+            s.src='./'+scripts[i++]; s.async=false; s.onload=next; s.onerror=next; doc.body.appendChild(s);
           }
+          next();
         }catch(_){ }
       }
 
       frame.addEventListener('load',function(){
-        copyPersistedToFrame();
+        var restored=copyPersistedToFrame();
+        if(restored){
+          frame.contentWindow.location.reload();
+          return;
+        }
         syncFromFrame();
+        setTimeout(injectEnhancements,0);
       });
 
       setInterval(syncFromFrame,500);
