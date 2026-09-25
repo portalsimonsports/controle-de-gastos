@@ -11,13 +11,15 @@
   </style>
 </head>
 <body>
-  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609240555"></iframe>
+  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609250552"></iframe>
   <script>
     (function(){
       'use strict';
       var frame=document.getElementById('app');
       var KEY='cg_token';
       var enhanced=false;
+      var restoreAttempted=false;
+      var reloadForRestore=false;
 
       var styles=[
         'enhancements.css?v=202607142115','calendar-enhancements.css?v=202607142115','professional-confirm.css?v=202607142115',
@@ -36,28 +38,66 @@
         'refund-money-ptbr.js?v=202609230902','refund-origin-fix.js?v=202609230912'
       ];
 
-      function copyPersistedToFrame(){
-        try{
-          var persisted=localStorage.getItem(KEY)||'';
-          var win=frame.contentWindow;
-          if(!win)return false;
-          var current=win.sessionStorage.getItem(KEY)||'';
-          if(persisted && !current){
-            win.sessionStorage.setItem(KEY,persisted);
-            return true;
-          }
-        }catch(_){ }
-        return false;
+      function getFrame(){
+        try{return frame.contentWindow||null;}catch(_){return null;}
       }
 
-      function syncFromFrame(){
+      function prepareLogin(){
         try{
-          var win=frame.contentWindow;
-          if(!win)return;
+          var doc=frame.contentDocument;
+          if(!doc)return;
+          var email=doc.getElementById('loginEmail');
+          var code=doc.getElementById('loginCode');
+          var send=doc.getElementById('sendCodeButton');
+          var enter=doc.getElementById('enterButton');
+          [email,code,send,enter].forEach(function(el){
+            if(!el)return;
+            el.disabled=false;
+            el.removeAttribute('disabled');
+            el.removeAttribute('readonly');
+            el.style.pointerEvents='auto';
+          });
+          if(email){
+            email.tabIndex=0;
+            email.autocomplete='email';
+          }
+        }catch(_){ }
+      }
+
+      function tryRestoreOnce(){
+        if(restoreAttempted)return false;
+        restoreAttempted=true;
+        try{
+          var persisted=localStorage.getItem(KEY)||'';
+          var win=getFrame();
+          if(!win || !persisted)return false;
+          var current=win.sessionStorage.getItem(KEY)||'';
+          if(current)return false;
+          win.sessionStorage.setItem(KEY,persisted);
+          reloadForRestore=true;
+          return true;
+        }catch(_){return false;}
+      }
+
+      function syncSession(){
+        try{
+          var win=getFrame();
+          var doc=frame.contentDocument;
+          if(!win || !doc)return;
           var token=win.sessionStorage.getItem(KEY)||'';
           var persisted=localStorage.getItem(KEY)||'';
-          if(token && token!==persisted)localStorage.setItem(KEY,token);
-          if(!token && persisted)localStorage.removeItem(KEY);
+          var publicView=doc.getElementById('publicView');
+          var loginVisible=!!(publicView && !publicView.hidden);
+
+          if(token){
+            if(token!==persisted)localStorage.setItem(KEY,token);
+            return;
+          }
+
+          if(loginVisible){
+            if(persisted && restoreAttempted)localStorage.removeItem(KEY);
+            prepareLogin();
+          }
         }catch(_){ }
       }
 
@@ -81,16 +121,26 @@
       }
 
       frame.addEventListener('load',function(){
-        var restored=copyPersistedToFrame();
-        if(restored){
+        prepareLogin();
+
+        if(!reloadForRestore && tryRestoreOnce()){
           frame.contentWindow.location.reload();
           return;
         }
-        syncFromFrame();
-        setTimeout(injectEnhancements,0);
+
+        if(reloadForRestore)reloadForRestore=false;
+
+        setTimeout(function(){
+          syncSession();
+          prepareLogin();
+          injectEnhancements();
+        },250);
       });
 
-      setInterval(syncFromFrame,500);
+      setInterval(function(){
+        syncSession();
+        prepareLogin();
+      },750);
     })();
   </script>
 </body>
