@@ -1,77 +1,73 @@
 'use strict';
 
 (function () {
-  function installMenuFix() {
-    if (document.getElementById('cgUiRuntimeFix20260926')) return;
-    const style = document.createElement('style');
-    style.id = 'cgUiRuntimeFix20260926';
-    style.textContent = `
-      #tabs.tabs{
-        display:grid!important;
-        grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;
-        gap:8px!important;
-        width:100%!important;
-        overflow:visible!important;
-        flex-wrap:wrap!important;
-        padding:2px 0!important;
-      }
-      #tabs.tabs .tab{
-        width:100%!important;
-        min-width:0!important;
-        max-width:none!important;
-        white-space:normal!important;
-        text-align:center!important;
-        line-height:1.15!important;
-      }
-      @media (max-width:700px){
-        #tabs.tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
-      }
-      @media (max-width:360px){
-        #tabs.tabs{grid-template-columns:1fr!important;}
-      }
-      #viewBus #busBalance,
-      #viewBus #busFare{
-        display:block!important;
-        visibility:visible!important;
-        opacity:1!important;
-        color:#fff!important;
-        -webkit-text-fill-color:#fff!important;
-      }
-    `;
-    document.head.appendChild(style);
+  function applyMenuFix() {
+    const nav = document.getElementById('tabs');
+    if (!nav) return;
+
+    nav.scrollLeft = 0;
+    nav.scrollTop = 0;
+    nav.style.setProperty('display', 'grid', 'important');
+    nav.style.setProperty('grid-template-columns', window.innerWidth <= 700 ? 'repeat(2,minmax(0,1fr))' : 'repeat(auto-fit,minmax(118px,1fr))', 'important');
+    nav.style.setProperty('gap', '8px', 'important');
+    nav.style.setProperty('width', '100%', 'important');
+    nav.style.setProperty('max-width', '100%', 'important');
+    nav.style.setProperty('height', 'auto', 'important');
+    nav.style.setProperty('max-height', 'none', 'important');
+    nav.style.setProperty('overflow', 'visible', 'important');
+    nav.style.setProperty('overflow-x', 'visible', 'important');
+    nav.style.setProperty('overflow-y', 'visible', 'important');
+    nav.style.setProperty('transform', 'none', 'important');
+    nav.style.setProperty('margin', '2px 0 0', 'important');
+
+    nav.querySelectorAll('.tab').forEach(function (button) {
+      button.style.setProperty('display', 'flex', 'important');
+      button.style.setProperty('align-items', 'center', 'important');
+      button.style.setProperty('justify-content', 'center', 'important');
+      button.style.setProperty('width', '100%', 'important');
+      button.style.setProperty('min-width', '0', 'important');
+      button.style.setProperty('max-width', 'none', 'important');
+      button.style.setProperty('min-height', '42px', 'important');
+      button.style.setProperty('white-space', 'normal', 'important');
+      button.style.setProperty('text-align', 'center', 'important');
+      button.style.setProperty('transform', 'none', 'important');
+    });
+
+    const topbar = document.querySelector('.topbar');
+    if (topbar) {
+      topbar.style.setProperty('height', 'auto', 'important');
+      topbar.style.setProperty('max-height', 'none', 'important');
+      topbar.style.setProperty('overflow', 'visible', 'important');
+    }
   }
 
   async function restoreBusValues() {
     try {
-      if (!state || !state.token || typeof refreshBus !== 'function') return;
-      await refreshBus();
+      if (state && state.token && typeof refreshBus === 'function') await refreshBus();
     } catch (_) {}
   }
 
-  installMenuFix();
+  applyMenuFix();
+  window.addEventListener('resize', applyMenuFix);
 
   if (typeof showView === 'function') {
-    const previousShowView = showView;
+    const oldShowView = showView;
     showView = async function (id) {
-      await previousShowView(id);
-      installMenuFix();
+      await oldShowView(id);
+      applyMenuFix();
       if (id === 'viewBus') await restoreBusValues();
     };
   }
 
-  document.addEventListener('click', function (event) {
-    const button = event.target && event.target.closest ? event.target.closest('#tabs .tab') : null;
-    if (!button) return;
-    setTimeout(function () {
-      installMenuFix();
-      if (state && state.activeView === 'viewBus') restoreBusValues();
-    }, 80);
-  }, true);
+  let n = 0;
+  const timer = setInterval(function () {
+    applyMenuFix();
+    n += 1;
+    if (n >= 40) clearInterval(timer);
+  }, 250);
 
-  if (state && state.token) {
-    setTimeout(function () {
-      installMenuFix();
-      if (state.activeView === 'viewBus') restoreBusValues();
-    }, 250);
-  }
+  setTimeout(function () {
+    applyMenuFix();
+    if (state && state.activeView === 'viewBus') restoreBusValues();
+  }, 200);
 })();
