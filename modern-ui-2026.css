@@ -1,0 +1,237 @@
+:root{
+  --ui-bg:#07111f;
+  --ui-surface:#0d1a2d;
+  --ui-surface-2:#12233b;
+  --ui-surface-3:#172b48;
+  --ui-border:rgba(148,163,184,.18);
+  --ui-text:#f7f9fc;
+  --ui-muted:#9eabc0;
+  --ui-primary:#4f8cff;
+  --ui-primary-2:#6ea2ff;
+  --ui-success:#31d07c;
+  --ui-danger:#ff6b72;
+  --ui-shadow:0 18px 50px rgba(0,0,0,.24);
+}
+
+html,body{background:var(--ui-bg)!important}
+body{
+  background:
+    radial-gradient(900px 520px at 12% -10%,rgba(62,126,255,.18),transparent 55%),
+    linear-gradient(180deg,#091525 0%,#07111f 100%)!important;
+  color:var(--ui-text)!important;
+}
+
+.shell{
+  width:min(1180px,calc(100% - 28px))!important;
+  padding:14px 0 36px!important;
+}
+
+.topbar{
+  position:sticky!important;
+  top:10px!important;
+  z-index:40!important;
+  display:grid!important;
+  grid-template-columns:auto 1fr auto!important;
+  grid-template-areas:
+    "brand spacer logout"
+    "identity countdown countdown"
+    "tabs tabs tabs"!important;
+  gap:8px 12px!important;
+  padding:13px 14px 11px!important;
+  margin-bottom:14px!important;
+  border:1px solid var(--ui-border)!important;
+  border-radius:20px!important;
+  background:rgba(9,21,37,.82)!important;
+  backdrop-filter:blur(18px) saturate(130%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(130%)!important;
+  box-shadow:0 10px 34px rgba(0,0,0,.2)!important;
+}
+
+.brand{grid-area:brand;font-size:1.08rem!important;font-weight:800!important;letter-spacing:-.02em!important;align-self:center}
+.spacer{grid-area:spacer}
+#logoutButton{grid-area:logout!important}
+#identity{grid-area:identity!important}
+#countdown{grid-area:countdown!important;text-align:right!important}
+.identity{font-size:.82rem!important;color:var(--ui-muted)!important;line-height:1.2!important}
+.role{
+  margin-left:5px!important;
+  padding:2px 7px!important;
+  font-size:.67rem!important;
+  border-radius:999px!important;
+  border-color:rgba(110,162,255,.28)!important;
+  background:rgba(79,140,255,.10)!important;
+}
+
+.tabs{
+  grid-area:tabs!important;
+  display:flex!important;
+  gap:7px!important;
+  width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  flex-wrap:nowrap!important;
+  padding:1px 0 2px!important;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:0 0 auto!important;
+  min-width:max-content!important;
+  min-height:38px!important;
+  padding:8px 12px!important;
+  border-radius:12px!important;
+  border:1px solid var(--ui-border)!important;
+  background:rgba(18,35,59,.78)!important;
+  color:#dce6f5!important;
+  font-size:.86rem!important;
+  font-weight:650!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+  scroll-snap-align:start;
+}
+.tab.active{
+  color:#fff!important;
+  border-color:rgba(110,162,255,.55)!important;
+  background:linear-gradient(135deg,#4f8cff,#3b73e6)!important;
+  box-shadow:0 8px 20px rgba(79,140,255,.22)!important;
+}
+
+.btn,.tab,input,select{font-size:16px}
+.btn{
+  min-height:42px!important;
+  padding:9px 14px!important;
+  border-radius:12px!important;
+  font-weight:750!important;
+  box-shadow:none!important;
+}
+.btn.primary{background:linear-gradient(135deg,#4f8cff,#3f79e8)!important;color:#fff!important}
+.btn.ghost{background:rgba(18,35,59,.72)!important;border:1px solid var(--ui-border)!important;color:var(--ui-text)!important}
+.btn.danger{
+  min-height:36px!important;
+  padding:7px 11px!important;
+  border:1px solid rgba(255,107,114,.28)!important;
+  background:rgba(255,107,114,.08)!important;
+  color:#ffb8bc!important;
+}
+
+.card,.hero{
+  border:1px solid var(--ui-border)!important;
+  background:linear-gradient(180deg,rgba(17,33,56,.95),rgba(12,26,45,.96))!important;
+  border-radius:20px!important;
+  box-shadow:var(--ui-shadow)!important;
+}
+.card{padding:18px!important;margin-top:14px!important}
+.card h2,.card h3{margin:0 0 14px!important;font-size:1.2rem!important;letter-spacing:-.02em!important}
+.hero{padding:30px 22px!important}
+.hero h1{font-size:clamp(2rem,7vw,3.35rem)!important}
+
+.grid{gap:12px!important}
+label{
+  margin:0 0 6px 2px!important;
+  color:#aab7cb!important;
+  font-size:.78rem!important;
+  font-weight:650!important;
+  letter-spacing:.01em!important;
+}
+input,select{
+  width:100%!important;
+  min-height:46px!important;
+  height:46px!important;
+  padding:10px 12px!important;
+  border-radius:12px!important;
+  border:1px solid rgba(148,163,184,.18)!important;
+  background:#081425!important;
+  color:var(--ui-text)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02)!important;
+}
+input:focus,select:focus{
+  border-color:rgba(79,140,255,.78)!important;
+  box-shadow:0 0 0 3px rgba(79,140,255,.13)!important;
+}
+input:disabled{opacity:1!important;color:#d7e2f2!important;background:#0b1728!important}
+
+.table-wrap{
+  border-radius:14px!important;
+  overflow:auto!important;
+}
+table{font-size:.84rem!important}
+th,td{padding:10px 8px!important;border-bottom-color:rgba(148,163,184,.12)!important}
+th{color:#aab6c9!important}
+
+/* Bilhete Único / transporte: resumo mais compacto */
+#viewBus{padding:18px!important}
+#viewBus>.grid{align-items:end!important}
+#viewBus #busBalance{
+  font-size:1.65rem!important;
+  font-weight:800!important;
+  letter-spacing:-.03em!important;
+  color:#fff!important;
+}
+#viewBus #busFare,#viewBus #busQuantity,#viewBus #busRecharge{
+  font-weight:700!important;
+}
+#viewBus #registerUse,#viewBus #registerRecharge{
+  min-width:150px!important;
+}
+#busInfo{
+  margin-top:12px!important;
+  padding:11px 12px!important;
+  border:1px solid var(--ui-border)!important;
+  border-radius:12px!important;
+  background:rgba(8,20,37,.58)!important;
+  color:#aebbd0!important;
+  font-size:.8rem!important;
+}
+
+.toast{
+  bottom:18px!important;
+  border-radius:14px!important;
+  background:rgba(7,16,30,.96)!important;
+  backdrop-filter:blur(14px)!important;
+}
+
+@media (max-width:900px){
+  .shell{width:calc(100% - 20px)!important;padding:10px 0 88px!important}
+  .topbar{
+    position:sticky!important;
+    top:8px!important;
+    grid-template-columns:1fr auto!important;
+    grid-template-areas:
+      "brand logout"
+      "identity countdown"
+      "tabs tabs"!important;
+    padding:12px!important;
+    border-radius:18px!important;
+  }
+  .brand{font-size:1rem!important}
+  #countdown{font-size:.76rem!important;white-space:nowrap!important}
+  .identity{width:auto!important;font-size:.78rem!important;min-width:0!important}
+  .tabs{margin:2px -2px 0!important;width:calc(100% + 4px)!important}
+  .tab{min-height:36px!important;padding:7px 11px!important;font-size:.82rem!important}
+  .card{padding:15px!important;border-radius:18px!important}
+  .card h2,.card h3{font-size:1.14rem!important;margin-bottom:12px!important}
+  .col-8,.col-6,.col-4,.col-3,.col-2{grid-column:span 12!important}
+
+  /* Campos pequenos ficam em duas colunas quando fizer sentido */
+  #viewBus .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #viewBus .col-12{grid-column:1/-1!important}
+  #viewBus .col-6,#viewBus .col-4,#viewBus .col-3,#viewBus .col-2{grid-column:span 1!important}
+  #viewBus .actions{grid-column:1/-1!important}
+  #viewBus #registerUse,#viewBus #registerRecharge{width:100%!important;min-width:0!important}
+
+  /* Formulários sem aparência gigante */
+  input,select{height:44px!important;min-height:44px!important}
+  .btn{min-height:40px!important}
+}
+
+@media (max-width:430px){
+  .shell{width:calc(100% - 16px)!important}
+  .topbar{top:6px!important;padding:11px!important}
+  .brand{font-size:.96rem!important}
+  #identity{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  #countdown{font-size:.72rem!important}
+  #viewBus .grid{gap:10px!important}
+  #viewBus #busBalance{font-size:1.45rem!important}
+}
