@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609262015"></iframe>
+  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609270538"></iframe>
   <script>
     (function(){
       'use strict';
@@ -38,12 +38,50 @@
         'bilhete-controls.js?v=202607142115','junior-recorrencia.js?v=202607142115','expense-ptbr.js?v=202607142115',
         'expense-auto-cents.js?v=202608020818','bilhete-delete-fix.js?v=202607142115','mobile-data-fix.js?v=202607142115',
         'bus-null-fix.js?v=202607142115','expense-view-mode.js?v=202607161030','finance-tools-v2.js?v=202609230820',
-        'refund-money-ptbr.js?v=202609230902','refund-origin-fix.js?v=202609230912',
-        'ui-runtime-fix-20260926.js?v=202609262015'
+        'refund-money-ptbr.js?v=202609230902','refund-origin-fix.js?v=202609230912'
       ];
 
       function getFrame(){
         try{return frame.contentWindow||null;}catch(_){return null;}
+      }
+
+      function forceMobileMenu(){
+        try{
+          var win=getFrame();
+          var doc=frame.contentDocument;
+          if(!win||!doc)return;
+          var nav=doc.getElementById('tabs');
+          if(!nav)return;
+
+          var isMobile=win.matchMedia && win.matchMedia('(max-width:900px)').matches;
+          if(!isMobile)return;
+
+          var style=doc.getElementById('cgMobileMenuFixFinal');
+          if(!style){
+            style=doc.createElement('style');
+            style.id='cgMobileMenuFixFinal';
+            style.textContent='@media(max-width:900px){.topbar{position:static!important;display:grid!important;grid-template-columns:1fr auto!important;grid-template-areas:"brand logout" "identity countdown" "tabs tabs"!important;gap:8px 10px!important;align-items:center!important}.brand{grid-area:brand!important}.spacer{display:none!important}#identity{grid-area:identity!important;width:auto!important;min-width:0!important}#countdown{grid-area:countdown!important;text-align:right!important}#logoutButton{grid-area:logout!important;justify-self:end!important}#tabs.tabs{grid-area:tabs!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%!important;max-width:100%!important;overflow:visible!important;overflow-x:visible!important;flex-wrap:wrap!important;padding:0!important;margin:2px 0 0!important;transform:none!important}#tabs.tabs .tab{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;max-width:100%!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-align:center!important;line-height:1.15!important;padding:10px 8px!important;transform:none!important}}';
+            doc.head.appendChild(style);
+          }
+
+          nav.scrollLeft=0;
+          nav.style.setProperty('display','grid','important');
+          nav.style.setProperty('grid-template-columns','repeat(2,minmax(0,1fr))','important');
+          nav.style.setProperty('overflow','visible','important');
+          nav.style.setProperty('overflow-x','visible','important');
+          nav.style.setProperty('width','100%','important');
+          nav.style.setProperty('max-width','100%','important');
+          nav.style.setProperty('transform','none','important');
+
+          Array.prototype.forEach.call(nav.querySelectorAll('.tab'),function(btn){
+            btn.style.setProperty('width','100%','important');
+            btn.style.setProperty('min-width','0','important');
+            btn.style.setProperty('max-width','100%','important');
+            btn.style.setProperty('white-space','normal','important');
+            btn.style.setProperty('overflow','visible','important');
+            btn.style.setProperty('transform','none','important');
+          });
+        }catch(_){ }
       }
 
       function prepareLogin(){
@@ -116,7 +154,7 @@
           });
           var i=0;
           function next(){
-            if(i>=scripts.length)return;
+            if(i>=scripts.length){ forceMobileMenu(); return; }
             var s=doc.createElement('script');
             s.src='./'+scripts[i++]; s.async=false; s.onload=next; s.onerror=next; doc.body.appendChild(s);
           }
@@ -138,12 +176,16 @@
           syncSession();
           prepareLogin();
           injectEnhancements();
+          forceMobileMenu();
         },250);
+
+        [500,1000,1800,3000,5000].forEach(function(ms){setTimeout(forceMobileMenu,ms);});
       });
 
       setInterval(function(){
         syncSession();
         prepareLogin();
+        forceMobileMenu();
       },750);
     })();
   </script>
