@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609270538"></iframe>
+  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609270611"></iframe>
   <script>
     (function(){
       'use strict';
@@ -52,23 +52,22 @@
           if(!win||!doc)return;
           var nav=doc.getElementById('tabs');
           if(!nav)return;
-
-          var isMobile=win.matchMedia && win.matchMedia('(max-width:900px)').matches;
+          var isMobile=win.matchMedia&&win.matchMedia('(max-width:900px)').matches;
           if(!isMobile)return;
 
           var style=doc.getElementById('cgMobileMenuFixFinal');
           if(!style){
             style=doc.createElement('style');
             style.id='cgMobileMenuFixFinal';
-            style.textContent='@media(max-width:900px){.topbar{position:static!important;display:grid!important;grid-template-columns:1fr auto!important;grid-template-areas:"brand logout" "identity countdown" "tabs tabs"!important;gap:8px 10px!important;align-items:center!important}.brand{grid-area:brand!important}.spacer{display:none!important}#identity{grid-area:identity!important;width:auto!important;min-width:0!important}#countdown{grid-area:countdown!important;text-align:right!important}#logoutButton{grid-area:logout!important;justify-self:end!important}#tabs.tabs{grid-area:tabs!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%!important;max-width:100%!important;overflow:visible!important;overflow-x:visible!important;flex-wrap:wrap!important;padding:0!important;margin:2px 0 0!important;transform:none!important}#tabs.tabs .tab{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;max-width:100%!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-align:center!important;line-height:1.15!important;padding:10px 8px!important;transform:none!important}}';
+            style.textContent='@media(max-width:900px){html,body{max-width:100%!important;overflow-x:hidden!important}.shell,.topbar,#privateView{max-width:100%!important;overflow-x:hidden!important}.topbar{position:static!important;display:grid!important;grid-template-columns:1fr auto!important;grid-template-areas:"brand logout" "identity countdown" "tabs tabs"!important;gap:8px 10px!important;align-items:center!important}.brand{grid-area:brand!important}.spacer{display:none!important}#identity{grid-area:identity!important;width:auto!important;min-width:0!important}#countdown{grid-area:countdown!important;text-align:right!important}#logoutButton{grid-area:logout!important;justify-self:end!important}#tabs.tabs{grid-area:tabs!important;display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;gap:8px!important;width:100%!important;max-width:100%!important;overflow:visible!important;overflow-x:hidden!important;padding:0!important;margin:2px 0 0!important;transform:none!important}#tabs.tabs .tab{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;max-width:100%!important;white-space:normal!important;overflow:hidden!important;text-overflow:clip!important;text-align:center!important;line-height:1.15!important;padding:10px 12px!important;transform:none!important;box-sizing:border-box!important}}';
             doc.head.appendChild(style);
           }
 
           nav.scrollLeft=0;
-          nav.style.setProperty('display','grid','important');
-          nav.style.setProperty('grid-template-columns','repeat(2,minmax(0,1fr))','important');
-          nav.style.setProperty('overflow','visible','important');
-          nav.style.setProperty('overflow-x','visible','important');
+          nav.style.setProperty('display','flex','important');
+          nav.style.setProperty('flex-direction','column','important');
+          nav.style.setProperty('flex-wrap','nowrap','important');
+          nav.style.setProperty('overflow-x','hidden','important');
           nav.style.setProperty('width','100%','important');
           nav.style.setProperty('max-width','100%','important');
           nav.style.setProperty('transform','none','important');
@@ -78,7 +77,7 @@
             btn.style.setProperty('min-width','0','important');
             btn.style.setProperty('max-width','100%','important');
             btn.style.setProperty('white-space','normal','important');
-            btn.style.setProperty('overflow','visible','important');
+            btn.style.setProperty('overflow','hidden','important');
             btn.style.setProperty('transform','none','important');
           });
         }catch(_){ }
@@ -112,7 +111,7 @@
         try{
           var persisted=localStorage.getItem(KEY)||'';
           var win=getFrame();
-          if(!win || !persisted)return false;
+          if(!win||!persisted)return false;
           var current=win.sessionStorage.getItem(KEY)||'';
           if(current)return false;
           win.sessionStorage.setItem(KEY,persisted);
@@ -125,21 +124,13 @@
         try{
           var win=getFrame();
           var doc=frame.contentDocument;
-          if(!win || !doc)return;
+          if(!win||!doc)return;
           var token=win.sessionStorage.getItem(KEY)||'';
           var persisted=localStorage.getItem(KEY)||'';
           var publicView=doc.getElementById('publicView');
-          var loginVisible=!!(publicView && !publicView.hidden);
-
-          if(token){
-            if(token!==persisted)localStorage.setItem(KEY,token);
-            return;
-          }
-
-          if(loginVisible){
-            if(persisted && restoreAttempted)localStorage.removeItem(KEY);
-            prepareLogin();
-          }
+          var loginVisible=!!(publicView&&!publicView.hidden);
+          if(token){if(token!==persisted)localStorage.setItem(KEY,token);return;}
+          if(loginVisible){if(persisted&&restoreAttempted)localStorage.removeItem(KEY);prepareLogin();}
         }catch(_){ }
       }
 
@@ -149,14 +140,12 @@
         try{
           var doc=frame.contentDocument;
           if(!doc)return;
-          styles.forEach(function(href){
-            var l=doc.createElement('link'); l.rel='stylesheet'; l.href='./'+href; doc.head.appendChild(l);
-          });
+          styles.forEach(function(href){var l=doc.createElement('link');l.rel='stylesheet';l.href='./'+href;doc.head.appendChild(l);});
           var i=0;
           function next(){
-            if(i>=scripts.length){ forceMobileMenu(); return; }
+            if(i>=scripts.length){forceMobileMenu();return;}
             var s=doc.createElement('script');
-            s.src='./'+scripts[i++]; s.async=false; s.onload=next; s.onerror=next; doc.body.appendChild(s);
+            s.src='./'+scripts[i++];s.async=false;s.onload=next;s.onerror=next;doc.body.appendChild(s);
           }
           next();
         }catch(_){ }
@@ -164,29 +153,13 @@
 
       frame.addEventListener('load',function(){
         prepareLogin();
-
-        if(!reloadForRestore && tryRestoreOnce()){
-          frame.contentWindow.location.reload();
-          return;
-        }
-
+        if(!reloadForRestore&&tryRestoreOnce()){frame.contentWindow.location.reload();return;}
         if(reloadForRestore)reloadForRestore=false;
-
-        setTimeout(function(){
-          syncSession();
-          prepareLogin();
-          injectEnhancements();
-          forceMobileMenu();
-        },250);
-
+        setTimeout(function(){syncSession();prepareLogin();injectEnhancements();forceMobileMenu();},250);
         [500,1000,1800,3000,5000].forEach(function(ms){setTimeout(forceMobileMenu,ms);});
       });
 
-      setInterval(function(){
-        syncSession();
-        prepareLogin();
-        forceMobileMenu();
-      },750);
+      setInterval(function(){syncSession();prepareLogin();forceMobileMenu();},750);
     })();
   </script>
 </body>
