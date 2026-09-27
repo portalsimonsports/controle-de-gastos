@@ -1,8 +1,15 @@
 .query-actions {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.query-actions .btn-mini {
+  flex: 0 0 auto;
 }
 
 .btn-mini {
@@ -75,6 +82,7 @@
 @media (max-width: 900px) {
   .query-actions {
     justify-content: flex-start;
+    flex-wrap: nowrap;
   }
 
   #viewQuery table {
