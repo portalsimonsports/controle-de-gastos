@@ -55,8 +55,19 @@
     return true;
   }
 
+  function loadBirthdayModule(){
+    if(document.querySelector('script[data-cg-birthday]'))return;
+    const script=document.createElement('script');
+    script.src='./birthday.js?v=202609291412';
+    script.async=false;
+    script.dataset.cgBirthday='1';
+    document.body.appendChild(script);
+  }
+
   if(!install()){
     const timer=setInterval(()=>{if(install())clearInterval(timer);},100);
     setTimeout(()=>clearInterval(timer),15000);
   }
+
+  loadBirthdayModule();
 })();
