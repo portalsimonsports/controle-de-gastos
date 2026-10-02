@@ -149,6 +149,9 @@
     }
     .loading-box { padding: 16px 20px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
 
+    .schedule-actions { white-space: nowrap; }
+    .schedule-actions .btn { min-height: 34px; padding: 6px 10px; margin-right: 6px; }
+
     @media (max-width: 900px) {
       .col-8, .col-6, .col-4, .col-3, .col-2 { grid-column: span 12; }
       .topbar { position: static; }
@@ -401,7 +404,8 @@
     const money = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
     const state = {
       token: sessionStorage.getItem('cg_token') || '', role: 'viewer', user: '', timer: null,
-      activeView: sessionStorage.getItem('cg_view') || 'viewDashboard'
+      activeView: sessionStorage.getItem('cg_view') || 'viewDashboard',
+      scheduleEditingRow: 0
     };
     const tabs = [
       { id: 'viewDashboard', label: 'Dashboard', roles: ['admin', 'editor', 'viewer'] },
@@ -772,6 +776,9 @@
       $('#scheduleTime').value = '';
       $('#scheduleAdvance').value = '3';
       $('#scheduleTitle').value = '';
+      state.scheduleEditingRow = 0;
+      const button = $('#saveSchedule');
+      if (button) button.textContent = 'Gravar agendamento';
     }
 
     function normalizeScheduleAdvance(value) {
@@ -807,9 +814,66 @@
       }
 
       try {
-        const result = await call('scheduleSave', params);
-        toast(result.msg || 'Agendamento gravado.');
+        let result;
+
+        if (state.scheduleEditingRow && state.role === 'admin') {
+          result = await call('scheduleUpdate', {
+            ...params,
+            linha: state.scheduleEditingRow
+          });
+        } else {
+          result = await call('scheduleSave', params);
+        }
+
+        toast(
+          result.msg ||
+          (state.scheduleEditingRow ? 'Agendamento atualizado.' : 'Agendamento gravado.')
+        );
+
         clearSchedule();
+        await loadSchedules();
+      } catch (error) {
+        toast(error.message, 'error');
+      }
+    }
+
+    function editSchedule(item) {
+      if (state.role !== 'admin') return;
+
+      state.scheduleEditingRow = Number(item.linha || 0);
+      $('#scheduleDate').value = item.dataIso || '';
+      $('#scheduleTime').value = item.hora || '';
+      $('#scheduleAdvance').value = item.antecedencias || item.antecedenciaDias || '';
+      $('#scheduleTitle').value = item.titulo || '';
+
+      const button = $('#saveSchedule');
+      if (button) button.textContent = 'Salvar alteração';
+
+      $('#scheduleDate').focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function deleteSchedule(item) {
+      if (state.role !== 'admin') return;
+
+      const label = item.titulo || 'este agendamento';
+      const ok = window.confirm(
+        'Excluir o agendamento "' + label + '"?\n\nEsta ação não poderá ser desfeita.'
+      );
+      if (!ok) return;
+
+      try {
+        const result = await call('scheduleDelete', {
+          token: state.token,
+          linha: item.linha
+        });
+
+        toast(result.msg || 'Agendamento excluído.');
+
+        if (Number(state.scheduleEditingRow) === Number(item.linha)) {
+          clearSchedule();
+        }
+
         await loadSchedules();
       } catch (error) {
         toast(error.message, 'error');
@@ -823,10 +887,28 @@
         });
 
         const body = $('#scheduleBody');
+        const headRow = body?.closest('table')?.querySelector('thead tr');
         body.innerHTML = '';
 
+        if (headRow) {
+          const existing = headRow.querySelector('th[data-schedule-actions="1"]');
+
+          if (state.role === 'admin' && !existing) {
+            const th = document.createElement('th');
+            th.textContent = 'Ações';
+            th.dataset.scheduleActions = '1';
+            headRow.appendChild(th);
+          } else if (state.role !== 'admin' && existing) {
+            existing.remove();
+          }
+        }
+
         if (!result.rows?.length) {
-          return emptyRow(body, 5, 'Nenhum agendamento cadastrado.');
+          return emptyRow(
+            body,
+            state.role === 'admin' ? 6 : 5,
+            'Nenhum agendamento cadastrado.'
+          );
         }
 
         result.rows.forEach(item => {
@@ -836,12 +918,37 @@
           appendCell(row, item.titulo || '');
           appendCell(row, item.antecedencias || item.antecedenciaDias || '');
           appendCell(row, item.status || '');
+
+          if (state.role === 'admin') {
+            const cell = document.createElement('td');
+            cell.className = 'schedule-actions';
+
+            const editButton = document.createElement('button');
+            editButton.type = 'button';
+            editButton.className = 'btn ghost';
+            editButton.textContent = 'Editar';
+            editButton.addEventListener('click', () => editSchedule(item));
+
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'btn danger';
+            deleteButton.textContent = 'Excluir';
+            deleteButton.addEventListener('click', () => deleteSchedule(item));
+
+            cell.append(editButton, deleteButton);
+            row.appendChild(cell);
+          }
+
           body.appendChild(row);
         });
       } catch (error) {
         const body = $('#scheduleBody');
         if (body) {
-          emptyRow(body, 5, 'Não foi possível carregar os agendamentos.');
+          emptyRow(
+            body,
+            state.role === 'admin' ? 6 : 5,
+            'Não foi possível carregar os agendamentos.'
+          );
         }
         throw error;
       }
