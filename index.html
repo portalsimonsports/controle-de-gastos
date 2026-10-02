@@ -4,6 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#07111f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Controle de Gastos">
+  <link rel="manifest" href="./manifest.webmanifest?v=202610020605">
+  <link rel="icon" href="./icon-192.svg?v=202610020605" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-192.svg?v=202610020605">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -14,7 +22,7 @@
   </style>
 </head>
 <body>
-  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202609280545"></iframe>
+  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202610020605"></iframe>
   <script>
     (function(){
       'use strict';
@@ -38,7 +46,8 @@
         'bilhete-controls.js?v=202607142115','junior-recorrencia.js?v=202607142115','expense-ptbr.js?v=202607142115',
         'expense-auto-cents.js?v=202608020818','bilhete-delete-fix.js?v=202607142115','mobile-data-fix.js?v=202607142115',
         'bus-null-fix.js?v=202607142115','expense-view-mode.js?v=202607161030','finance-tools-v2.js?v=202609230820',
-        'refund-money-ptbr.js?v=202609230902','refund-origin-fix.js?v=202609230912'
+        'refund-money-ptbr.js?v=202609230902','refund-origin-fix.js?v=202609230912',
+        'birthday.js?v=202610020605','income-brl-fix.js?v=202610020605'
       ];
 
       function getFrame(){
@@ -163,6 +172,13 @@
 
       setInterval(function(){syncSession();prepareLogin();forceMobileMenu();},750);
     })();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./service-worker.js?v=202610020605', { scope: './' }).catch(function () {});
+      });
+    }
   </script>
 </body>
 </html>
