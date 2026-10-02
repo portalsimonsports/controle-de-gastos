@@ -62,29 +62,44 @@ body{
   background:rgba(79,140,255,.10)!important;
 }
 
-/* Todos os menus devem permanecer visíveis. Não usar carrossel horizontal. */
+/* MENU PRINCIPAL — linha única horizontal, sem quebra, com rolagem */
 .tabs{
   grid-area:tabs!important;
-  display:grid!important;
-  grid-template-columns:repeat(auto-fit,minmax(100px,1fr))!important;
-  gap:7px!important;
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  gap:8px!important;
   width:100%!important;
-  overflow:visible!important;
-  padding:1px 0 2px!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  padding:2px 0 8px!important;
+  margin:2px 0 0!important;
+  scroll-behavior:smooth!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-x:contain!important;
+  scrollbar-width:thin!important;
 }
-.tabs::-webkit-scrollbar{display:none}
+.tabs::-webkit-scrollbar{height:5px}
+.tabs::-webkit-scrollbar-thumb{background:rgba(148,163,184,.28);border-radius:999px}
 .tab{
-  width:100%!important;
-  min-width:0!important;
-  min-height:38px!important;
-  padding:8px 10px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:max-content!important;
+  max-width:none!important;
+  min-height:40px!important;
+  padding:9px 14px!important;
   border-radius:12px!important;
   border:1px solid var(--ui-border)!important;
   background:rgba(18,35,59,.78)!important;
   color:#dce6f5!important;
-  font-size:.86rem!important;
+  font-size:.84rem!important;
   font-weight:650!important;
-  white-space:normal!important;
+  white-space:nowrap!important;
   line-height:1.15!important;
   text-align:center!important;
   box-shadow:none!important;
@@ -209,11 +224,7 @@ th{color:#aab6c9!important}
   .brand{font-size:1rem!important}
   #countdown{font-size:.76rem!important;white-space:nowrap!important}
   .identity{width:auto!important;font-size:.78rem!important;min-width:0!important}
-  .tabs{
-    margin:2px 0 0!important;
-    width:100%!important;
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  }
+  .tabs{margin:2px 0 0!important;width:100%!important;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;}
   .tab{min-height:40px!important;padding:7px 7px!important;font-size:.78rem!important}
   .card{padding:15px!important;border-radius:18px!important}
   .card h2,.card h3{font-size:1.14rem!important;margin-bottom:12px!important}
@@ -238,7 +249,7 @@ th{color:#aab6c9!important}
   .brand{font-size:.96rem!important}
   #identity{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
   #countdown{font-size:.72rem!important}
-  .tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .tabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;}
   .tab{font-size:.78rem!important;min-height:42px!important}
   #viewBus .grid{gap:10px!important}
   #viewBus #busBalance{font-size:1.45rem!important}
