@@ -793,7 +793,10 @@
         dataEvento: $('#scheduleDate').value,
         hora: $('#scheduleTime').value,
         titulo: $('#scheduleTitle').value,
-        antecedencias
+        antecedencias: antecedencias,
+        // Compatibilidade com a implantação anterior do backend,
+        // que ainda lia o campo singular antecedenciaDias.
+        antecedenciaDias: antecedencias
       };
 
       if (!params.dataEvento || !params.hora || !params.titulo.trim() || !antecedencias) {
