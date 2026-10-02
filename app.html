@@ -309,22 +309,39 @@
 
       <article class="card view" id="viewAgendamento" hidden>
         <h3>Agendamento</h3>
-        <p class="muted">Cadastre avisos futuros que serão publicados conforme a antecedência definida.</p>
+        <p class="muted">Cadastre o evento e os dias de antecedência em que deseja receber os avisos. O sistema também considera um aviso no dia do evento, 1 hora antes.</p>
+
         <div class="grid">
-          <div class="col-3"><label for="scheduleDate">Data do evento</label><input type="date" id="scheduleDate"></div>
-          <div class="col-3"><label for="scheduleTime">Hora</label><input type="time" id="scheduleTime"></div>
-          <div class="col-3"><label for="scheduleAdvance">Antecedência da notificação (dias)</label><input type="number" min="0" max="365" value="3" id="scheduleAdvance"></div>
-          <div class="col-3"><label for="scheduleActive">Ativo</label><select id="scheduleActive"><option value="true">Sim</option><option value="false">Não</option></select></div>
+          <div class="col-3">
+            <label for="scheduleDate">Data do evento</label>
+            <input type="date" id="scheduleDate">
+          </div>
 
-          <div class="col-6"><label for="scheduleTitle">Descrição / título</label><input id="scheduleTitle" maxlength="180" placeholder="Ex.: Troca do botijão de gás"></div>
-          <div class="col-6"><label for="scheduleCard">Card GitHub</label><input id="scheduleCard" maxlength="500" placeholder="URL da imagem/card no GitHub"></div>
+          <div class="col-3">
+            <label for="scheduleTime">Hora</label>
+            <input type="time" id="scheduleTime">
+          </div>
 
-          <div class="col-12"><label for="scheduleMessage">Mensagem do aviso</label><input id="scheduleMessage" maxlength="500" placeholder="Texto que será publicado no aviso"></div>
+          <div class="col-3">
+            <label for="scheduleAdvance">Antecedência da notificação (dias)</label>
+            <input
+              type="text"
+              inputmode="numeric"
+              id="scheduleAdvance"
+              value="3"
+              placeholder="Ex.: 7,5,3,1"
+              maxlength="40"
+            >
+          </div>
 
-          <div class="col-3"><label for="scheduleConfirmation">Exigir confirmação?</label><select id="scheduleConfirmation"><option value="true">Sim</option><option value="false">Não</option></select></div>
-          <div class="col-3"><label for="scheduleButtonText">Texto do botão</label><input id="scheduleButtonText" value="✅ CONFIRMAR" maxlength="80"></div>
-          <div class="col-3"><label for="scheduleDaily">Publicar diariamente?</label><select id="scheduleDaily"><option value="true">Sim</option><option value="false">Não</option></select></div>
-          <div class="col-3"><label for="scheduleEndOnDate">Encerrar no dia do evento?</label><select id="scheduleEndOnDate"><option value="true">Sim</option><option value="false">Não</option></select></div>
+          <div class="col-12">
+            <label for="scheduleTitle">Descrição / título</label>
+            <input
+              id="scheduleTitle"
+              maxlength="180"
+              placeholder="Ex.: Troca do botijão de gás"
+            >
+          </div>
 
           <div class="col-12 actions">
             <button class="btn" id="saveSchedule">Gravar agendamento</button>
@@ -333,9 +350,21 @@
           </div>
         </div>
 
+        <p class="muted small">
+          Exemplo: <strong>7,5,3,1</strong> envia avisos 7, 5, 3 e 1 dia antes. Além disso, o sistema prevê aviso no dia do evento, 1 hora antes.
+        </p>
+
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Data</th><th>Hora</th><th>Descrição</th><th class="right">Antecedência</th><th>Status</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Hora</th>
+                <th>Descrição</th>
+                <th>Antecedência</th>
+                <th>Status</th>
+              </tr>
+            </thead>
             <tbody id="scheduleBody"></tbody>
           </table>
         </div>
@@ -520,97 +549,18 @@
       $('#dashboardTotal').textContent = money(result.total);
     }
     async function saveExpense() {
-      const params = { token: state.token, data: $('#expenseDate').value, descricao: $('#expenseDescription').value, valorTotal: $('#expenseValue').value,
-        refCartao: $('#expenseCard').value, nParcelas: $('#expenseInstallments').value, divididoSN: $('#expenseDivided').value, modoData: $('#expenseMode').value };
-      if (!params.data || !params.descricao.trim() || Number(params.valorTotal) <= 0 || !params.refCartao) return toast('Preencha data, descrição, valor e cartão.', 'error');
-      try { const result = await call('saveDespesa', params); toast(result.msg || 'Despesa gravada.'); clearExpense(); }
-      catch (error) { toast(error.message, 'error'); }
-    }
-    function clearExpense() {
-      $('#expenseDescription').value = ''; $('#expenseValue').value = ''; $('#expenseInstallments').value = '1';
-      $('#expenseDivided').value = 'false'; $('#expenseMode').value = 'mesmo_dia'; $('#expenseDate').value = localIso();
-    }
-    async function loadQuery() {
-      const start = $('#queryStart').value, end = $('#queryEnd').value; if (!start || !end) return toast('Informe o período.', 'error');
-      try {
-        const result = await call('listDespesas', { token: state.token, inicio: start, fim: end }); $('#queryHeader').textContent = result.header || '';
-        const body = $('#queryBody'); body.innerHTML = '';
-        if (!result.rows?.length) emptyRow(body, 5);
-        else result.rows.forEach(item => { const row = document.createElement('tr'); appendCell(row, item.data); appendCell(row, item.descricao); appendCell(row, item.cartao); appendCell(row, item.ref || ''); appendCell(row, money(item.valor), 'right'); body.appendChild(row); });
-        $('#queryTotal').textContent = money(result.total);
-      } catch (error) { toast(error.message, 'error'); }
-    }
-    async function loadMonths() {
-      const result = await call('getMeses', { token: state.token }); const select = $('#cardMonth'); const current = select.value; select.innerHTML = '';
-      result.rows.forEach(item => { const option = document.createElement('option'); option.value = `${String(item.key % 100).padStart(2, '0')}/${Math.floor(item.key / 100)}`; option.textContent = item.label; if (option.value === current) option.selected = true; select.appendChild(option); });
-      if (select.value) await loadCardSummary(); else { emptyRow($('#cardSummaryBody'), 3, 'Nenhum mês disponível na coluna AH.'); $('#cardSummaryTotal').textContent = money(0); }
-    }
-    async function loadCardSummary() {
-      if (!$('#cardMonth').value) return;
-      try {
-        const result = await call('getResumoCartao', { token: state.token, mes: $('#cardMonth').value }); const body = $('#cardSummaryBody'); body.innerHTML = '';
-        result.rows.forEach(item => { const row = document.createElement('tr'); appendCell(row, item.ref); appendCell(row, item.cartao); appendCell(row, money(item.total), 'right'); body.appendChild(row); });
-        $('#cardSummaryTotal').textContent = money(result.total);
-      } catch (error) { toast(error.message, 'error'); }
-    }
-    async function loadYears() {
-      const result = await call('getAnos', { token: state.token }); const select = $('#annualYear'); const current = select.value; select.innerHTML = '';
-      result.rows.forEach(year => { const option = document.createElement('option'); option.value = year; option.textContent = year; if (String(year) === current) option.selected = true; select.appendChild(option); });
-      await loadAnnual();
-    }
-    async function loadAnnual() {
-      if (!$('#annualYear').value) return;
-      try {
-        const result = await call('getResumoAnual', { token: state.token, ano: $('#annualYear').value }); const body = $('#annualBody'); body.innerHTML = '';
-        result.meses.forEach(item => { const row = document.createElement('tr'); appendCell(row, String(item.mes).padStart(2, '0')); appendCell(row, item.nome); appendCell(row, money(item.gasto), 'right'); appendCell(row, item.meta ? money(item.meta) : '—', 'right'); appendCell(row, item.perc === null ? '—' : `${Number(item.perc).toFixed(2)}%`, 'right'); body.appendChild(row); });
-        $('#annualTotal').textContent = money(result.total);
-      } catch (error) { toast(error.message, 'error'); }
-    }
-    function clearIncome() { ['incomeSalary', 'incomeOthers', 'incomeRent', 'incomeRefund', 'incomeReturn'].forEach(id => { $('#' + id).value = ''; }); }
-    async function saveIncome() {
-      const params = { token: state.token, data: $('#incomeDate').value, salario: $('#incomeSalary').value, outros: $('#incomeOthers').value, aluguel: $('#incomeRent').value, restituicao: $('#incomeRefund').value, rendAplic: $('#incomeReturn').value };
-      try { const result = await call('invrecSave', params); toast(result.msg || 'Registro gravado.'); clearIncome(); }
-      catch (error) { toast(error.message, 'error'); }
-    }
-    async function loadIncome() {
-      try {
-        const result = await call('invrecList', { token: state.token, inicio: $('#incomeStart').value, fim: $('#incomeEnd').value }); const body = $('#incomeBody'); body.innerHTML = '';
-        if (!result.rows?.length) emptyRow(body, 7);
-        else result.rows.forEach(item => { const row = document.createElement('tr'); appendCell(row, item.data); appendCell(row, money(item.salario), 'right'); appendCell(row, money(item.outros), 'right'); appendCell(row, money(item.aluguel), 'right'); appendCell(row, money(item.restitui), 'right'); appendCell(row, money(item.rendAplic), 'right'); appendCell(row, money(item.total), 'right'); body.appendChild(row); });
-      } catch (error) { toast(error.message, 'error'); }
-    }
-    function clearSchedule() {
-      $('#scheduleDate').value = '';
-      $('#scheduleTime').value = '';
-      $('#scheduleAdvance').value = '3';
-      $('#scheduleActive').value = 'true';
-      $('#scheduleTitle').value = '';
-      $('#scheduleCard').value = '';
-      $('#scheduleMessage').value = '';
-      $('#scheduleConfirmation').value = 'true';
-      $('#scheduleButtonText').value = '✅ CONFIRMAR';
-      $('#scheduleDaily').value = 'true';
-      $('#scheduleEndOnDate').value = 'true';
-    }
+      const antecedencias = normalizeScheduleAdvance($('#scheduleAdvance').value);
 
-    async function saveSchedule() {
       const params = {
         token: state.token,
         dataEvento: $('#scheduleDate').value,
         hora: $('#scheduleTime').value,
         titulo: $('#scheduleTitle').value,
-        mensagem: $('#scheduleMessage').value,
-        cardGithub: $('#scheduleCard').value,
-        confirmacao: $('#scheduleConfirmation').value,
-        textoBotao: $('#scheduleButtonText').value,
-        antecedenciaDias: $('#scheduleAdvance').value,
-        publicarDiariamente: $('#scheduleDaily').value,
-        encerrarNoDiaEvento: $('#scheduleEndOnDate').value,
-        ativo: $('#scheduleActive').value
+        antecedencias: antecedencias
       };
 
-      if (!params.dataEvento || !params.titulo.trim()) {
-        return toast('Informe a data do evento e a descrição/título.', 'error');
+      if (!params.dataEvento || !params.hora || !params.titulo.trim() || !antecedencias) {
+        return toast('Informe data, hora, descrição/título e ao menos uma antecedência em dias.', 'error');
       }
 
       try {
@@ -635,7 +585,7 @@
           appendCell(row, item.dataEvento || '');
           appendCell(row, item.hora || '');
           appendCell(row, item.titulo || '');
-          appendCell(row, (item.antecedenciaDias ?? '') + ' dia(s)', 'right');
+          appendCell(row, item.antecedencias || item.antecedenciaDias || '');
           appendCell(row, item.status || '');
           body.appendChild(row);
         });
@@ -690,6 +640,9 @@
     $('#saveSchedule').addEventListener('click', saveSchedule);
     $('#clearSchedule').addEventListener('click', clearSchedule);
     $('#loadSchedules').addEventListener('click', loadSchedules);
+    $('#scheduleAdvance').addEventListener('blur', event => {
+      event.target.value = normalizeScheduleAdvance(event.target.value);
+    });
     $('#registerUse').addEventListener('click', registerUse);
     $('#registerRecharge').addEventListener('click', registerRecharge);
     $('#loadBus').addEventListener('click', loadBus);
