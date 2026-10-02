@@ -309,7 +309,36 @@
 
       <article class="card view" id="viewAgendamento" hidden>
         <h3>Agendamento</h3>
-        <p class="muted">Agendamentos e avisos futuros.</p>
+        <p class="muted">Cadastre avisos futuros que serão publicados conforme a antecedência definida.</p>
+        <div class="grid">
+          <div class="col-3"><label for="scheduleDate">Data do evento</label><input type="date" id="scheduleDate"></div>
+          <div class="col-3"><label for="scheduleTime">Hora</label><input type="time" id="scheduleTime"></div>
+          <div class="col-3"><label for="scheduleAdvance">Antecedência da notificação (dias)</label><input type="number" min="0" max="365" value="3" id="scheduleAdvance"></div>
+          <div class="col-3"><label for="scheduleActive">Ativo</label><select id="scheduleActive"><option value="true">Sim</option><option value="false">Não</option></select></div>
+
+          <div class="col-6"><label for="scheduleTitle">Descrição / título</label><input id="scheduleTitle" maxlength="180" placeholder="Ex.: Troca do botijão de gás"></div>
+          <div class="col-6"><label for="scheduleCard">Card GitHub</label><input id="scheduleCard" maxlength="500" placeholder="URL da imagem/card no GitHub"></div>
+
+          <div class="col-12"><label for="scheduleMessage">Mensagem do aviso</label><input id="scheduleMessage" maxlength="500" placeholder="Texto que será publicado no aviso"></div>
+
+          <div class="col-3"><label for="scheduleConfirmation">Exigir confirmação?</label><select id="scheduleConfirmation"><option value="true">Sim</option><option value="false">Não</option></select></div>
+          <div class="col-3"><label for="scheduleButtonText">Texto do botão</label><input id="scheduleButtonText" value="✅ CONFIRMAR" maxlength="80"></div>
+          <div class="col-3"><label for="scheduleDaily">Publicar diariamente?</label><select id="scheduleDaily"><option value="true">Sim</option><option value="false">Não</option></select></div>
+          <div class="col-3"><label for="scheduleEndOnDate">Encerrar no dia do evento?</label><select id="scheduleEndOnDate"><option value="true">Sim</option><option value="false">Não</option></select></div>
+
+          <div class="col-12 actions">
+            <button class="btn" id="saveSchedule">Gravar agendamento</button>
+            <button class="btn ghost" id="clearSchedule">Limpar</button>
+            <button class="btn primary" id="loadSchedules">Atualizar lista</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Hora</th><th>Descrição</th><th class="right">Antecedência</th><th>Status</th></tr></thead>
+            <tbody id="scheduleBody"></tbody>
+          </table>
+        </div>
       </article>
 
       <article class="card view" id="viewBus" hidden>
@@ -430,6 +459,7 @@
         if (id === 'viewCards') await loadMonths();
         if (id === 'viewAnnual') await loadYears();
         if (id === 'viewCalendar') await loadCalendar();
+        if (id === 'viewAgendamento') await loadSchedules();
         if (id === 'viewBus') await refreshBus();
       } catch (error) { toast(error.message, 'error'); }
     }
@@ -549,6 +579,73 @@
         else result.rows.forEach(item => { const row = document.createElement('tr'); appendCell(row, item.data); appendCell(row, money(item.salario), 'right'); appendCell(row, money(item.outros), 'right'); appendCell(row, money(item.aluguel), 'right'); appendCell(row, money(item.restitui), 'right'); appendCell(row, money(item.rendAplic), 'right'); appendCell(row, money(item.total), 'right'); body.appendChild(row); });
       } catch (error) { toast(error.message, 'error'); }
     }
+    function clearSchedule() {
+      $('#scheduleDate').value = '';
+      $('#scheduleTime').value = '';
+      $('#scheduleAdvance').value = '3';
+      $('#scheduleActive').value = 'true';
+      $('#scheduleTitle').value = '';
+      $('#scheduleCard').value = '';
+      $('#scheduleMessage').value = '';
+      $('#scheduleConfirmation').value = 'true';
+      $('#scheduleButtonText').value = '✅ CONFIRMAR';
+      $('#scheduleDaily').value = 'true';
+      $('#scheduleEndOnDate').value = 'true';
+    }
+
+    async function saveSchedule() {
+      const params = {
+        token: state.token,
+        dataEvento: $('#scheduleDate').value,
+        hora: $('#scheduleTime').value,
+        titulo: $('#scheduleTitle').value,
+        mensagem: $('#scheduleMessage').value,
+        cardGithub: $('#scheduleCard').value,
+        confirmacao: $('#scheduleConfirmation').value,
+        textoBotao: $('#scheduleButtonText').value,
+        antecedenciaDias: $('#scheduleAdvance').value,
+        publicarDiariamente: $('#scheduleDaily').value,
+        encerrarNoDiaEvento: $('#scheduleEndOnDate').value,
+        ativo: $('#scheduleActive').value
+      };
+
+      if (!params.dataEvento || !params.titulo.trim()) {
+        return toast('Informe a data do evento e a descrição/título.', 'error');
+      }
+
+      try {
+        const result = await call('scheduleSave', params);
+        toast(result.msg || 'Agendamento gravado.');
+        clearSchedule();
+        await loadSchedules();
+      } catch (error) {
+        toast(error.message, 'error');
+      }
+    }
+
+    async function loadSchedules() {
+      try {
+        const result = await call('scheduleList', { token: state.token });
+        const body = $('#scheduleBody');
+        body.innerHTML = '';
+        if (!result.rows?.length) return emptyRow(body, 5, 'Nenhum agendamento cadastrado.');
+
+        result.rows.forEach(item => {
+          const row = document.createElement('tr');
+          appendCell(row, item.dataEvento || '');
+          appendCell(row, item.hora || '');
+          appendCell(row, item.titulo || '');
+          appendCell(row, (item.antecedenciaDias ?? '') + ' dia(s)', 'right');
+          appendCell(row, item.status || '');
+          body.appendChild(row);
+        });
+      } catch (error) {
+        const body = $('#scheduleBody');
+        if (body) emptyRow(body, 5, 'Backend de Agendamentos ainda não atualizado.');
+        throw error;
+      }
+    }
+
     async function loadCalendar() {
       try {
         const result = await call('calendarGet', { token: state.token }); $('#calendarTitle').textContent = result.title || 'Calendário';
@@ -590,6 +687,9 @@
     $('#saveIncome').addEventListener('click', saveIncome);
     $('#clearIncome').addEventListener('click', clearIncome);
     $('#loadIncome').addEventListener('click', loadIncome);
+    $('#saveSchedule').addEventListener('click', saveSchedule);
+    $('#clearSchedule').addEventListener('click', clearSchedule);
+    $('#loadSchedules').addEventListener('click', loadSchedules);
     $('#registerUse').addEventListener('click', registerUse);
     $('#registerRecharge').addEventListener('click', registerRecharge);
     $('#loadBus').addEventListener('click', loadBus);
