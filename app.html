@@ -55,12 +55,33 @@
       font-size: .76rem; text-transform: uppercase;
     }
 
-    .tabs { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; }
+    .tabs {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      flex-wrap: nowrap;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 5px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .tabs::-webkit-scrollbar { height: 5px; }
+    .tabs::-webkit-scrollbar-thumb { background: rgba(158,171,195,.35); border-radius: 999px; }
     .tab, .btn {
       min-height: 42px; border: 1px solid var(--border); border-radius: 11px;
       padding: 9px 13px; cursor: pointer; transition: .18s ease;
     }
-    .tab { background: var(--card-2); color: #dce7fb; }
+    .tab {
+      background: var(--card-2);
+      color: #dce7fb;
+      flex: 0 0 auto;
+      width: auto;
+      min-width: max-content;
+      white-space: nowrap;
+    }
     .tab:hover, .tab:focus-visible { border-color: #4f6d9e; transform: translateY(-1px); }
     .tab.active { background: var(--primary); border-color: var(--primary); color: white; }
 
@@ -132,7 +153,7 @@
       .col-8, .col-6, .col-4, .col-3, .col-2 { grid-column: span 12; }
       .topbar { position: static; }
       .identity { width: 100%; }
-      .tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 3px; }
+      .tabs { display:flex; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; width:100%; max-width:100%; padding-bottom:5px; }
       .tab { white-space: nowrap; }
     }
   </style>
