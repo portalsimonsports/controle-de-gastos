@@ -606,6 +606,22 @@
       $('#expenseDate').value = localIso();
     }
 
+    function formatInstallmentRef(value) {
+      const raw = String(value == null ? '' : value).trim();
+      if (!raw) return '';
+
+      if (/^\d+\s*\/\s*\d+$/.test(raw)) {
+        return raw.replace(/\s+/g, '');
+      }
+
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime()) && /GMT|Horário|Standard Time|Daylight Time/i.test(raw)) {
+        return parsed.getDate() + '/' + (parsed.getMonth() + 1);
+      }
+
+      return raw;
+    }
+
     async function loadQuery() {
       const start = $('#queryStart').value;
       const end = $('#queryEnd').value;
@@ -630,7 +646,7 @@
             appendCell(row, item.data);
             appendCell(row, item.descricao);
             appendCell(row, item.cartao);
-            appendCell(row, item.ref || '');
+            appendCell(row, formatInstallmentRef(item.ref));
             appendCell(row, money(item.valor), 'right');
             body.appendChild(row);
           });
