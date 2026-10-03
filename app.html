@@ -518,8 +518,21 @@
       $('#identity').innerHTML = ''; const name = document.createTextNode(`Olá, ${state.user} `); const role = document.createElement('span');
       role.className = 'role'; role.textContent = state.role; $('#identity').append(name, role);
       const cardSelect = $('#expenseCard'); cardSelect.innerHTML = '';
-      Object.keys(info.cartoes || {}).sort((a, b) => Number(a) - Number(b)).forEach(key => {
-        const option = document.createElement('option'); option.value = key; option.textContent = `${key} — ${info.cartoes[key]}`; cardSelect.appendChild(option);
+      const cartoesPadrao = {
+        '1': 'ELO',
+        '2': 'MASTER',
+        '3': 'VISA',
+        '4': 'DÉBITO',
+        '5': 'OUTROS',
+        '6': 'INTER MASTER',
+        '7': 'Dinheiro'
+      };
+      const cartoesDisponiveis = { ...cartoesPadrao, ...(info.cartoes || {}) };
+      Object.keys(cartoesDisponiveis).sort((a, b) => Number(a) - Number(b)).forEach(key => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = `${key} — ${cartoesDisponiveis[key]}`;
+        cardSelect.appendChild(option);
       });
       $('#publicView').hidden = true; $('#privateView').hidden = false; $('#logoutButton').hidden = false;
       startCountdown(info.expiresIn); renderTabs(); showView(state.activeView);
