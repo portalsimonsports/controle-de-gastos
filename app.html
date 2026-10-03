@@ -659,23 +659,66 @@
     }
 
     async function loadMonths() {
-      const result = await call('getMeses', { token: state.token });
       const select = $('#cardMonth');
       const current = select.value;
       select.innerHTML = '';
 
-      result.rows.forEach(item => {
-        const option = document.createElement('option');
-        option.value = `${String(item.key % 100).padStart(2, '0')}/${Math.floor(item.key / 100)}`;
-        option.textContent = item.label;
-        if (option.value === current) option.selected = true;
-        select.appendChild(option);
+      let rows = [];
+
+      try {
+        const result = await call('getMeses', { token: state.token });
+        rows = Array.isArray(result.rows) ? result.rows.slice() : [];
+      } catch (error) {
+        console.warn('Falha ao carregar meses da API:', error);
+      }
+
+      // Fallback visual independente da API:
+      // garante os 12 meses do ano atual mesmo se a lista do backend vier vazia.
+      if (!rows.length) {
+        const year = new Date().getFullYear();
+        const nomes = [
+          'JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO',
+          'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'
+        ];
+
+        rows = Array.from({ length: 12 }, (_, index) => ({
+          key: year * 100 + (index + 1),
+          label: nomes[index] + ' de ' + year
+        })).reverse();
+      }
+
+      // Remove duplicidades e mantém ordem decrescente.
+      const byKey = new Map();
+      rows.forEach(item => {
+        const key = Number(item.key);
+        if (!Number.isFinite(key)) return;
+        byKey.set(key, {
+          key,
+          label: item.label || ''
+        });
       });
+
+      [...byKey.values()]
+        .sort((a, b) => b.key - a.key)
+        .forEach(item => {
+          const option = document.createElement('option');
+          option.value = `${String(item.key % 100).padStart(2, '0')}/${Math.floor(item.key / 100)}`;
+          option.textContent = item.label || option.value;
+          if (option.value === current) option.selected = true;
+          select.appendChild(option);
+        });
+
+      if (!select.value && select.options.length) {
+        const now = new Date();
+        const wanted = `${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        const found = [...select.options].find(option => option.value === wanted);
+        select.value = found ? wanted : select.options[0].value;
+      }
 
       if (select.value) {
         await loadCardSummary();
       } else {
-        emptyRow($('#cardSummaryBody'), 3, 'Nenhum mês disponível na coluna AH.');
+        emptyRow($('#cardSummaryBody'), 3, 'Nenhum mês disponível.');
         $('#cardSummaryTotal').textContent = money(0);
       }
     }
