@@ -99,6 +99,8 @@
   }
 
   async function saveNewExpense(button) {
+    if (!button || button.dataset.expenseSaving === '1') return;
+
     const valueInput = document.getElementById('expenseValue');
     const numericValue = parseMoneyPtBr(valueInput.value);
 
@@ -130,6 +132,7 @@
     }
 
     const originalText = button.textContent;
+    button.dataset.expenseSaving = '1';
     button.disabled = true;
     button.textContent = 'Gravando...';
 
@@ -141,14 +144,31 @@
         clearExpense();
       } else {
         valueInput.value = '';
-      }
+        valueInput.dataset.moneyDigits = '';
+        valueInput.dataset.moneyMode = 'auto';
 
-      if (typeof window.resetExpenseExtras === 'function') {
-        window.resetExpenseExtras();
+        const description = document.getElementById('expenseDescription');
+        const installments = document.getElementById('expenseInstallments');
+        const divided = document.getElementById('expenseDivided');
+        const mode = document.getElementById('expenseMode');
+        const recurring = document.getElementById('expenseRecurring');
+        const interval = document.getElementById('expenseRecurrenceInterval');
+        const repetitions = document.getElementById('expenseRecurrenceCount');
+        const account = document.getElementById('expenseAccount');
+
+        if (description) description.value = '';
+        if (installments) installments.value = '1';
+        if (divided) divided.value = 'false';
+        if (mode) mode.value = 'mesmo_dia';
+        if (recurring) recurring.value = 'false';
+        if (interval) interval.value = '1';
+        if (repetitions) repetitions.value = '1';
+        if (account) account.value = 'PESSOAL';
       }
     } catch (error) {
       toast(error.message, 'error');
     } finally {
+      delete button.dataset.expenseSaving;
       button.disabled = false;
       button.textContent = originalText;
     }
