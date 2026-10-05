@@ -2,6 +2,14 @@
 
 (function () {
   let expenseOrganizeTimer = null;
+  window.__cgExpenseSaveLock = window.__cgExpenseSaveLock || false;
+
+  function setButtonState(button, state, label) {
+    if (!button) return;
+    button.classList.remove('saving', 'saved', 'save-error');
+    if (state) button.classList.add(state);
+    if (label) button.textContent = label;
+  }
 
   function element(id) {
     return document.getElementById(id);
@@ -46,7 +54,7 @@
     stopOriginal(event);
 
     const button = element('saveExpense');
-    if (!button || button.dataset.saving === '1') return;
+    if (!button || button.dataset.saving === '1' || window.__cgExpenseSaveLock) return;
 
     const description = element('expenseDescription');
     const recurring = element('expenseRecurring');
@@ -76,9 +84,11 @@
     }
 
     const originalText = button.textContent;
+    window.__cgExpenseSaveLock = true;
     button.dataset.saving = '1';
     button.disabled = true;
-    button.textContent = 'Gravando...';
+    button.setAttribute('aria-busy', 'true');
+    setButtonState(button, 'saving', '⏳ Gravando...');
 
     try {
       const result = await call('saveDespesa', params, false);
@@ -87,13 +97,20 @@
       if (typeof clearExpense === 'function') clearExpense();
       if (typeof resetExpenseExtras === 'function') resetExpenseExtras();
 
+      setButtonState(button, 'saved', '✓ Gravado');
       scheduleExpenseOrganization();
+      await new Promise(function(resolve){ setTimeout(resolve, 900); });
     } catch (error) {
+      setButtonState(button, 'save-error', 'Falha ao gravar');
       toast(error.message, 'error');
+      await new Promise(function(resolve){ setTimeout(resolve, 1200); });
     } finally {
       delete button.dataset.saving;
+      delete button.dataset.saveState;
+      window.__cgExpenseSaveLock = false;
+      button.removeAttribute('aria-busy');
       button.disabled = false;
-      button.textContent = originalText;
+      setButtonState(button, '', originalText);
     }
   }
 
