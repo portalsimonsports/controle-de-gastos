@@ -598,12 +598,41 @@
     }
 
     function clearExpense() {
-      $('#expenseDescription').value = '';
-      $('#expenseValue').value = '';
-      $('#expenseInstallments').value = '1';
-      $('#expenseDivided').value = 'false';
-      $('#expenseMode').value = 'mesmo_dia';
-      $('#expenseDate').value = localIso();
+      const description = $('#expenseDescription');
+      const value = $('#expenseValue');
+      const installments = $('#expenseInstallments');
+      const divided = $('#expenseDivided');
+      const mode = $('#expenseMode');
+      const date = $('#expenseDate');
+      const card = $('#expenseCard');
+
+      if (description) description.value = '';
+      if (value) {
+        value.value = '';
+        value.dataset.moneyDigits = '';
+        value.dataset.moneyMode = 'auto';
+      }
+      if (installments) installments.value = '1';
+      if (divided) divided.value = 'false';
+      if (mode) mode.value = 'mesmo_dia';
+      if (date) date.value = localIso();
+      if (card && card.options.length) card.selectedIndex = 0;
+
+      const recurring = $('#expenseRecurring');
+      const interval = $('#expenseRecurrenceInterval');
+      const repetitions = $('#expenseRecurrenceCount');
+      const account = $('#expenseAccount');
+      const intervalField = $('#expenseRecurrenceIntervalField');
+      const countField = $('#expenseRecurrenceCountField');
+      const recurrenceNote = $('#expenseRecurrenceNote');
+
+      if (recurring) recurring.value = 'false';
+      if (interval) { interval.value = '1'; interval.disabled = true; }
+      if (repetitions) { repetitions.value = '1'; repetitions.disabled = true; }
+      if (account) account.value = 'PESSOAL';
+      if (intervalField) intervalField.hidden = true;
+      if (countField) countField.hidden = true;
+      if (recurrenceNote) { recurrenceNote.hidden = true; recurrenceNote.textContent = ''; }
     }
 
     function formatInstallmentRef(value) {
