@@ -968,9 +968,26 @@
       if (state.role !== 'admin') return;
 
       const label = item.titulo || 'este agendamento';
-      const ok = window.confirm(
-        'Excluir o agendamento "' + label + '"?\n\nEsta ação não poderá ser desfeita.'
-      );
+
+      if (typeof window.professionalConfirm !== 'function') {
+        return toast(
+          'Não foi possível abrir a confirmação de exclusão. Atualize a página e tente novamente.',
+          'error'
+        );
+      }
+
+      const ok = await window.professionalConfirm({
+        title: 'Excluir agendamento?',
+        description: 'Você está prestes a excluir o agendamento selecionado.',
+        details: [
+          { label: 'Descrição', value: label, wide: true }
+        ],
+        warning: 'Esta ação não poderá ser desfeita.',
+        confirmText: 'Excluir agendamento',
+        cancelText: 'Cancelar',
+        variant: 'danger'
+      });
+
       if (!ok) return;
 
       try {
