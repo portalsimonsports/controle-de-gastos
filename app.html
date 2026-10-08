@@ -903,48 +903,65 @@
         .join(',');
     }
 
+    let scheduleSavePending = false;
     async function saveSchedule() {
+      if (scheduleSavePending) {
+        toast('A gravação já está em andamento. Aguarde a confirmação.', 'error');
+        return;
+      }
       const antecedencias = normalizeScheduleAdvance($('#scheduleAdvance').value);
-
+      const editingRow = state.scheduleEditingRow && state.role === 'admin'
+        ? Number(state.scheduleEditingRow) : 0;
       const params = {
         token: state.token,
         dataEvento: $('#scheduleDate').value,
         hora: $('#scheduleTime').value,
-        titulo: $('#scheduleTitle').value,
+        titulo: $('#scheduleTitle').value.trim(),
         antecedencias: antecedencias,
-        // Compatibilidade com a implantação anterior do backend,
-        // que ainda lia o campo singular antecedenciaDias.
         antecedenciaDias: antecedencias
       };
-
-      if (!params.dataEvento || !params.hora || !params.titulo.trim() || !antecedencias) {
-        return toast(
-          'Informe data, hora, descrição/título e ao menos uma antecedência em dias.',
-          'error'
-        );
+      if (!params.dataEvento || !params.hora || !params.titulo || !antecedencias) {
+        return toast('Informe data, hora, descrição/título e ao menos uma antecedência em dias.', 'error');
       }
-
+      const button = $('#saveSchedule');
+      const initialLabel = button ? button.textContent : '';
+      scheduleSavePending = true;
+      if (button) {
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = '⏳ Gravando...';
+      }
+      // Navegação entre menus mantém a requisição ativa; não aguardar recarregamento da tabela.
       try {
-        let result;
-
-        if (state.scheduleEditingRow && state.role === 'admin') {
-          result = await call('scheduleUpdate', {
-            ...params,
-            linha: state.scheduleEditingRow
-          });
-        } else {
-          result = await call('scheduleSave', params);
+        const action = editingRow ? 'scheduleUpdate' : 'scheduleSave';
+        const result = await call(action, editingRow ? { ...params, linha: editingRow } : params, false);
+        if (button) {
+          button.textContent = '✓ Gravado';
+          button.style.backgroundColor = '#16834a';
         }
-
-        toast(
-          result.msg ||
-          (state.scheduleEditingRow ? 'Agendamento atualizado.' : 'Agendamento gravado.')
-        );
-
+        toast(result.msg || (editingRow ? 'Agendamento atualizado e confirmado.' : 'Agendamento gravado e confirmado.'));
         clearSchedule();
-        await loadSchedules();
+        if (button) {
+          button.textContent = '✓ Gravado';
+          button.style.backgroundColor = '#16834a';
+        }
+        // A confirmação da gravação não depende da atualização da lista.
+        loadSchedules().catch(error => console.warn('Falha ao atualizar lista de agendamentos:', error));
       } catch (error) {
-        toast(error.message, 'error');
+        if (button) button.textContent = 'Falha na gravação';
+        toast(error.message || 'Não foi possível confirmar a gravação. Verifique a lista antes de tentar novamente.', 'error');
+      } finally {
+        scheduleSavePending = false;
+        if (button) {
+          button.disabled = false;
+          button.removeAttribute('aria-busy');
+          setTimeout(() => {
+            if (!scheduleSavePending) {
+              button.style.backgroundColor = '';
+              button.textContent = state.scheduleEditingRow ? 'Salvar alteração' : 'Gravar agendamento';
+            }
+          }, 1800);
+        }
       }
     }
 
