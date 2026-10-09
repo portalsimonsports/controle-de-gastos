@@ -341,9 +341,8 @@
               type="text"
               inputmode="numeric"
               id="scheduleAdvance"
-              value="3"
-              placeholder="Ex.: 7,5,3,1"
-              maxlength="40"
+              value=""
+              placeholder="Ex.: 10,8,6,3,1"
             >
           </div>
 
@@ -894,9 +893,10 @@
 
     function normalizeScheduleAdvance(value) {
       const parts = String(value || '')
-        .split(',')
-        .map(item => parseInt(item.trim(), 10))
-        .filter(item => Number.isInteger(item) && item >= 0 && item <= 365);
+        .split(/[;,\\s]+/)
+        .filter(item => /^\\d+$/.test(item))
+        .map(item => Number(item))
+        .filter(item => Number.isSafeInteger(item) && item > 0);
 
       return [...new Set(parts)]
         .sort((a, b) => b - a)
