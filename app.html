@@ -892,9 +892,10 @@
     }
 
     function normalizeScheduleAdvance(value) {
-      const parts = String(value || '')
-        .split(/[;,\\s]+/)
-        .filter(item => /^\\d+$/.test(item))
+      const parts = String(value ?? '')
+        .split(/[;,\s]+/)
+        .map(item => item.trim())
+        .filter(item => /^\d+$/.test(item))
         .map(item => Number(item))
         .filter(item => Number.isSafeInteger(item) && item > 0);
 
