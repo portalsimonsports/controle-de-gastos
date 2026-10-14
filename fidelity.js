@@ -66,8 +66,8 @@
         '</div>',
         '<div class="fidelity-field">',
         '<label for="fidelityRecharge">Valor da recarga</label>',
-        '<input type="number" min="0.01" step="0.01" ',
-        'id="fidelityRecharge" inputmode="decimal">',
+        '<input type="text" autocomplete="off" placeholder="0,00" ',
+        'id="fidelityRecharge" inputmode="numeric">',
         '</div>',
         '<div class="fidelity-actions">',
         '<button type="button" class="btn primary" ',
@@ -319,7 +319,7 @@
   async function registerFidelityRecharge() {
     const input = document.getElementById('fidelityRecharge');
     const value = Number(
-      String(input.value || '').replace(',', '.')
+      String(input.value || '').replace(/\./g, '').replace(',', '.')
     );
 
     if (!Number.isFinite(value) || value <= 0) {
