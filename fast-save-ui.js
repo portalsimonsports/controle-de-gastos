@@ -137,7 +137,7 @@
       const elapsed = ((performance.now() - started) / 1000).toFixed(1).replace('.', ',');
       setExpenseFeedback('✓ DESPESA GRAVADA NA PLANILHA! Campos limpos. Tempo de resposta: ' + elapsed + ' s.', 'success');
       setButtonState(button, 'saved', '✓ Gravado');
-      scheduleExpenseOrganization();
+      // A ordenação automática concorria com novas gravações; executar apenas por rotina dedicada.
     } catch (error) {
       setExpenseFeedback('Não houve confirmação da gravação. Os dados foram mantidos. Confira na planilha antes de tentar novamente. ' + (error?.message || ''), 'error');
       setButtonState(button, 'save-error', 'Falha ao gravar');
