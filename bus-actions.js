@@ -252,7 +252,7 @@
   async function registerBusRecharge() {
     const input = document.getElementById('busRecharge');
     const value = Number(
-      String(input.value || '').replace(',', '.')
+      String(input.value || '').replace(/\./g, '').replace(',', '.')
     );
 
     if (!Number.isFinite(value) || value <= 0) {
