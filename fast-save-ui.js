@@ -50,67 +50,103 @@
     }, 8000);
   }
 
+  function parseExpenseMoney(raw) {
+    const text = String(raw || '').replace(/R\\$/gi, '').replace(/\\s/g, '');
+    if (!text) return NaN;
+    const comma = text.lastIndexOf(',');
+    const dot = text.lastIndexOf('.');
+    let normalized = text;
+    if (comma >= 0 && (comma > dot)) normalized = text.replace(/\\./g, '').replace(',', '.');
+    else if (dot >= 0 && comma >= 0) normalized = text.replace(/,/g, '');
+    else if (comma >= 0) normalized = text.replace(',', '.');
+    const value = Number(normalized);
+    return Number.isFinite(value) ? value : NaN;
+  }
+
+  function expenseFeedback() {
+    let status = element('cgExpenseSaveFeedback');
+    if (status) return status;
+    const button = element('saveExpense');
+    if (!button) return null;
+    status = document.createElement('div');
+    status.id = 'cgExpenseSaveFeedback';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    status.style.cssText = 'display:none;width:100%;margin:12px 0;padding:14px;border-radius:12px;text-align:center;font-weight:700;line-height:1.45;';
+    const parent = button.closest('.actions') || button.parentElement;
+    parent.insertAdjacentElement('afterend', status);
+    return status;
+  }
+
+  function setExpenseFeedback(message, kind) {
+    const box = expenseFeedback();
+    if (!box) return;
+    box.textContent = message;
+    box.style.display = 'block';
+    box.style.color = kind === 'error' ? '#ffb6b6' : kind === 'success' ? '#abf2c6' : '#d8e5ff';
+    box.style.background = kind === 'error' ? '#482128' : kind === 'success' ? '#123a2a' : '#172b49';
+    box.style.border = '1px solid ' + (kind === 'error' ? '#ab5364' : kind === 'success' ? '#28865c' : '#496d9a');
+  }
+
   async function saveExpenseFast(event) {
     stopOriginal(event);
-
     const button = element('saveExpense');
     if (!button || button.dataset.saving === '1' || window.__cgExpenseSaveLock) return;
-
-    const description = element('expenseDescription');
-    const recurring = element('expenseRecurring');
-    const interval = element('expenseRecurrenceInterval');
-    const repetitions = element('expenseRecurrenceCount');
-    const account = element('expenseAccount');
-
+    const value = parseExpenseMoney(element('expenseValue')?.value);
     const params = {
       token: state.token,
       data: element('expenseDate')?.value || '',
-      descricao: description?.value || '',
-      valorTotal: element('expenseValue')?.value || '',
+      descricao: element('expenseDescription')?.value || '',
+      valorTotal: Number.isFinite(value) ? value.toFixed(2) : '',
       refCartao: element('expenseCard')?.value || '',
       nParcelas: element('expenseInstallments')?.value || '1',
       divididoSN: element('expenseDivided')?.value || 'false',
       modoData: element('expenseMode')?.value || 'mesmo_dia',
-      recorrenteSN: recurring?.value || 'false',
-      intervaloMeses: interval?.value || '1',
-      repeticoes: repetitions?.value || '1',
-      responsavel: account?.value || 'PESSOAL',
+      recorrenteSN: element('expenseRecurring')?.value || 'false',
+      intervaloMeses: element('expenseRecurrenceInterval')?.value || '1',
+      repeticoes: element('expenseRecurrenceCount')?.value || '1',
+      responsavel: element('expenseAccount')?.value || 'PESSOAL',
       adiarOrdenacaoFinal: 'true'
     };
-
-    if (!params.data || !params.descricao.trim() || Number(params.valorTotal) <= 0 || !params.refCartao) {
-      toast('Preencha data, descrição, valor e cartão.', 'error');
+    if (!params.data || !params.descricao.trim() || !Number.isFinite(value) || value <= 0 || !params.refCartao) {
+      setExpenseFeedback('Preencha data, descrição, valor e cartão.', 'error');
       return;
     }
-
+    if (params.recorrenteSN === 'true' && (!Number.isInteger(Number(params.intervaloMeses)) || Number(params.intervaloMeses) < 1 || !Number.isInteger(Number(params.repeticoes)) || Number(params.repeticoes) < 1)) {
+      setExpenseFeedback('Confira o intervalo e a quantidade de repetições.', 'error');
+      return;
+    }
     const originalText = button.textContent;
+    const started = performance.now();
     window.__cgExpenseSaveLock = true;
     button.dataset.saving = '1';
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
     setButtonState(button, 'saving', '⏳ Gravando...');
-
+    setExpenseFeedback('Enviando despesa para a planilha. Aguarde a confirmação.', 'pending');
     try {
       const result = await call('saveDespesa', params, false);
-      toast(result.msg || 'Despesa gravada.');
-
+      if (!result || result.ok === false) throw new Error(result?.msg || 'Gravação não confirmada.');
       if (typeof clearExpense === 'function') clearExpense();
+      else {
+        ['expenseDescription', 'expenseValue'].forEach(id => { const el = element(id); if (el) el.value = ''; });
+        const money = element('expenseValue');
+        if (money) { money.dataset.moneyDigits = ''; money.dataset.moneyMode = 'auto'; }
+      }
       if (typeof resetExpenseExtras === 'function') resetExpenseExtras();
-
+      const elapsed = ((performance.now() - started) / 1000).toFixed(1).replace('.', ',');
+      setExpenseFeedback('✓ DESPESA GRAVADA NA PLANILHA! Campos limpos. Tempo de resposta: ' + elapsed + ' s.', 'success');
       setButtonState(button, 'saved', '✓ Gravado');
       scheduleExpenseOrganization();
-      await new Promise(function(resolve){ setTimeout(resolve, 900); });
     } catch (error) {
+      setExpenseFeedback('Não houve confirmação da gravação. Os dados foram mantidos. Confira na planilha antes de tentar novamente. ' + (error?.message || ''), 'error');
       setButtonState(button, 'save-error', 'Falha ao gravar');
-      toast(error.message, 'error');
-      await new Promise(function(resolve){ setTimeout(resolve, 1200); });
     } finally {
       delete button.dataset.saving;
-      delete button.dataset.saveState;
       window.__cgExpenseSaveLock = false;
       button.removeAttribute('aria-busy');
       button.disabled = false;
-      setButtonState(button, '', originalText);
+      button.textContent = originalText;
     }
   }
 
