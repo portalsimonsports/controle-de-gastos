@@ -246,7 +246,7 @@
     stopOriginal(event);
     const button = element('registerRecharge');
     const input = element('busRecharge');
-    const value = Number(String(input?.value || '').replace(',', '.'));
+    const value = Number(String(input?.value || '').replace(/\./g, '').replace(',', '.'));
     if (!Number.isFinite(value) || value <= 0) return toast('Informe um valor de recarga válido.', 'error');
 
     const originalText = button.textContent;
