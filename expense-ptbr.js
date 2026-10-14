@@ -152,7 +152,7 @@
     try {
       const result = await call('saveDespesa', params, false);
       toast(result.msg || 'Despesa gravada.');
-      organizeLater();
+      // Sem ordenação imediata: evita disputa por ScriptLock após cada lançamento.
 
       if (typeof clearExpense === 'function') {
         clearExpense();
