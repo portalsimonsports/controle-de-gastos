@@ -3,7 +3,8 @@
 (function () {
   const TARGET_IDS = [
     'expenseValue',
-    'editExpenseValue'
+    'editExpenseValue',
+    'busRecharge'
   ];
 
   function onlyDigits(value) {
