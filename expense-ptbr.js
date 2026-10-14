@@ -98,8 +98,19 @@
       count >= 1;
   }
 
+  let pendingExpenseOrganization = null;
+  function organizeLater() {
+    clearTimeout(pendingExpenseOrganization);
+    pendingExpenseOrganization = setTimeout(function () {
+      if (!state || !state.token) return;
+      call('organizarDespesas', {token: state.token}, false).catch(function (error) {
+        console.warn('Ordenação posterior indisponível:', error);
+      });
+    }, 10000);
+  }
+
   async function saveNewExpense(button) {
-    if (!button || button.dataset.expenseSaving === '1') return;
+    if (!button || button.dataset.expenseSaving === '1' || window.__cgExpenseSaveLock) return;
 
     const valueInput = document.getElementById('expenseValue');
     const numericValue = parseMoneyPtBr(valueInput.value);
@@ -118,7 +129,8 @@
       recorrenteSN: fieldValue('expenseRecurring', 'false'),
       intervaloMeses: fieldValue('expenseRecurrenceInterval', '1'),
       repeticoes: fieldValue('expenseRecurrenceCount', '1'),
-      responsavel: fieldValue('expenseAccount', 'PESSOAL')
+      responsavel: fieldValue('expenseAccount', 'PESSOAL'),
+      adiarOrdenacaoFinal: 'true'
     };
 
     if (!validateCommon(params, numericValue)) {
@@ -132,6 +144,7 @@
     }
 
     const originalText = button.textContent;
+    window.__cgExpenseSaveLock = true;
     button.dataset.expenseSaving = '1';
     button.disabled = true;
     button.textContent = 'Gravando...';
@@ -139,6 +152,7 @@
     try {
       const result = await call('saveDespesa', params, false);
       toast(result.msg || 'Despesa gravada.');
+      organizeLater();
 
       if (typeof clearExpense === 'function') {
         clearExpense();
@@ -169,6 +183,7 @@
       toast(error.message, 'error');
     } finally {
       delete button.dataset.expenseSaving;
+      window.__cgExpenseSaveLock = false;
       button.disabled = false;
       button.textContent = originalText;
     }
