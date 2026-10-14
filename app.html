@@ -389,7 +389,7 @@
           <div class="col-3"><label for="busFare">Tarifa</label><input id="busFare" disabled></div>
           <div class="col-3"><label for="busQuantity">Quantidade de usos</label><input type="number" min="1" value="1" id="busQuantity"></div>
           <div class="col-3 actions"><button class="btn" id="registerUse">Registrar uso</button></div>
-          <div class="col-3"><label for="busRecharge">Valor da recarga</label><input type="number" min="0.01" step="0.01" id="busRecharge"></div>
+          <div class="col-3"><label for="busRecharge">Valor da recarga</label><input type="text" inputmode="numeric" autocomplete="off" placeholder="0,00" id="busRecharge"></div>
           <div class="col-3 actions"><button class="btn primary" id="registerRecharge">Registrar recarga</button></div>
           <div class="col-3"><label for="busStart">Início</label><input type="date" id="busStart"></div>
           <div class="col-3"><label for="busEnd">Fim</label><input type="date" id="busEnd"></div>
@@ -1117,7 +1117,7 @@
     }
     async function refreshBus() { try { const result = await call('buInfo', { token: state.token }); paintBus(result); } catch (error) { toast(error.message, 'error'); } }
     async function registerUse() { try { const result = await call('buUse', { token: state.token, qtd: $('#busQuantity').value }); toast(result.msg || 'Uso registrado.'); await refreshBus(); } catch (error) { toast(error.message, 'error'); } }
-    async function registerRecharge() { try { const result = await call('buRecharge', { token: state.token, valor: $('#busRecharge').value }); toast(result.msg || 'Recarga registrada.'); $('#busRecharge').value = ''; await refreshBus(); } catch (error) { toast(error.message, 'error'); } }
+    async function registerRecharge() { try { const result = await call('buRecharge', { token: state.token, valor: Number(String($('#busRecharge').value || '').replace(/\./g, '').replace(',', '.')) }); toast(result.msg || 'Recarga registrada.'); $('#busRecharge').value = ''; await refreshBus(); } catch (error) { toast(error.message, 'error'); } }
     async function loadBus() {
       try {
         const result = await call('buList', { token: state.token, inicio: $('#busStart').value, fim: $('#busEnd').value }); paintBus(result); const body = $('#busBody'); body.innerHTML = '';
