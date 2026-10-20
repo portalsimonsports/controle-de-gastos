@@ -126,18 +126,11 @@
     recurrenceNote.className = 'expense-recurrence-note';
     recurrenceNote.id = 'expenseRecurrenceNote';
 
-    const accountNote = document.createElement('p');
-    accountNote.className = 'expense-account-note';
-    accountNote.id = 'expenseAccountNote';
-    accountNote.textContent =
-      'Ao selecionar Junior, o sistema utiliza a referência de cartão 6 para alimentar a aba DespesasJuniorII.';
-
     grid.insertBefore(recurring, actions);
     grid.insertBefore(interval, actions);
     grid.insertBefore(repetitions, actions);
     grid.insertBefore(account, actions);
     grid.insertBefore(recurrenceNote, actions);
-    grid.insertBefore(accountNote, actions);
 
     element('expenseRecurring').addEventListener(
       'change',
