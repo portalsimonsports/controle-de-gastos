@@ -246,7 +246,7 @@
           <div class="col-3"><label for="expenseDivided">Dividido?</label><select id="expenseDivided"><option value="false">Não</option><option value="true">Sim</option></select></div>
           <div class="col-6 actions"><button class="btn" id="saveExpense">Gravar</button><button class="btn ghost" id="clearExpense">Limpar</button></div>
         </div>
-        <p class="muted small">O backend grava somente as colunas A:H da aba Despesas.</p>
+        
       </article>
 
       <article class="card view" id="viewQuery" hidden>
@@ -309,7 +309,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Data</th><th class="right">Salário</th><th class="right">Outros</th><th class="right">Aluguel</th><th class="right">Restituição</th><th class="right">Rend. aplicação</th><th class="right">Total</th></tr></thead>
+            <thead><tr><th>Data</th><th class="right">Salário</th><th class="right">Outros</th><th class="right">Aluguel</th><th class="right">Restituição</th><th class="right">Rend. aplicação</th><th class="right">Total</th><th>Ações</th></tr></thead>
             <tbody id="incomeBody"></tbody>
           </table>
         </div>
@@ -414,7 +414,8 @@
     const state = {
       token: sessionStorage.getItem('cg_token') || '', role: 'viewer', user: '', timer: null,
       activeView: sessionStorage.getItem('cg_view') || 'viewDashboard',
-      scheduleEditingRow: 0
+      scheduleEditingRow: 0,
+      incomeEditing: null
     };
     const tabs = [
       { id: 'viewDashboard', label: 'Dashboard', roles: ['admin', 'editor', 'viewer'] },
@@ -828,6 +829,9 @@
     function clearIncome() {
       ['incomeSalary', 'incomeOthers', 'incomeRent', 'incomeRefund', 'incomeReturn']
         .forEach(id => { $('#' + id).value = ''; });
+      state.incomeEditing = null;
+      $('#incomeDate').disabled = false;
+      $('#saveIncome').textContent = 'Gravar';
     }
 
     async function saveIncome() {
@@ -841,10 +845,17 @@
         rendAplic: $('#incomeReturn').value
       };
 
+      if (state.incomeEditing) {
+        params.linha = state.incomeEditing.linha;
+        params.dataOriginal = state.incomeEditing.dataIso;
+        params.assinatura = state.incomeEditing.assinatura;
+      }
+      const action = state.incomeEditing ? 'invrecUpdate' : 'invrecSave';
       try {
-        const result = await call('invrecSave', params);
+        const result = await call(action, params);
         toast(result.msg || 'Registro gravado.');
         clearIncome();
+        await loadIncome();
       } catch (error) {
         toast(error.message, 'error');
       }
@@ -862,7 +873,7 @@
         body.innerHTML = '';
 
         if (!result.rows?.length) {
-          emptyRow(body, 7);
+          emptyRow(body, 8);
         } else {
           result.rows.forEach(item => {
             const row = document.createElement('tr');
@@ -873,6 +884,26 @@
             appendCell(row, money(item.restitui), 'right');
             appendCell(row, money(item.rendAplic), 'right');
             appendCell(row, money(item.total), 'right');
+            if (result.permiteEdicao && item.assinatura) {
+              const cell = document.createElement('td');
+              const button = document.createElement('button');
+              button.type = 'button';
+              button.className = 'btn ghost';
+              button.textContent = 'Editar';
+              button.addEventListener('click', () => {
+                state.incomeEditing = { linha: item.linha, dataIso: item.dataIso, assinatura: item.assinatura };
+                $('#incomeDate').value = item.dataIso;
+                $('#incomeDate').disabled = true;
+                [['incomeSalary',item.salario],['incomeOthers',item.outros],['incomeRent',item.aluguel],['incomeRefund',item.restitui],['incomeReturn',item.rendAplic]]
+                  .forEach(([id,value]) => { $('#' + id).value = Number(value || 0).toFixed(2); });
+                $('#saveIncome').textContent = 'Salvar alterações';
+                $('#incomeDate').scrollIntoView({behavior:'smooth',block:'center'});
+              });
+              cell.appendChild(button);
+              row.appendChild(cell);
+            } else {
+              appendCell(row, '');
+            }
             body.appendChild(row);
           });
         }
