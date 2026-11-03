@@ -71,9 +71,10 @@
     if (!button) return null;
     status = document.createElement('div');
     status.id = 'cgExpenseSaveFeedback';
+    status.className = 'col-12';
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
-    status.style.cssText = 'display:none;width:100%;margin:12px 0;padding:14px;border-radius:12px;text-align:center;font-weight:700;line-height:1.45;';
+    status.style.cssText = 'display:none;grid-column:1 / -1;box-sizing:border-box;width:100%;max-width:100%;min-width:0;margin:4px 0 0;padding:12px 16px;border-radius:12px;text-align:center;font-size:14px;font-weight:500;line-height:1.5;white-space:normal;overflow-wrap:break-word;';
     const parent = button.closest('.actions') || button.parentElement;
     parent.insertAdjacentElement('afterend', status);
     return status;
@@ -126,11 +127,11 @@
     const clearWasDisabled = clearButton ? clearButton.disabled : false;
     if (clearButton) clearButton.disabled = true;
     const waitingTimer = setTimeout(function () {
-      setButtonState(button, 'saving', 'Aguardando confirmação...');
-      setExpenseFeedback('A resposta está demorando. A despesa pode já estar gravada; aguarde a confirmação. O sistema não enviará a compra novamente.', 'pending');
+      setButtonState(button, 'saving', '⏳ Gravando…');
+      setExpenseFeedback('Aguardando resposta da planilha. Não é necessário reenviar.', 'pending');
     }, 15000);
     const uncertainTimer = setTimeout(function () {
-      setExpenseFeedback('Ainda sem confirmação da gravação. Confira na Consulta; esta tela continua aguardando a resposta original, sem reenviar a compra.', 'pending');
+      setExpenseFeedback('Ainda aguardando confirmação. Você pode conferir o registro na Consulta.', 'pending');
     }, 180000);
     const started = performance.now();
     window.__cgExpenseSaveLock = true;
@@ -138,7 +139,7 @@
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
     setButtonState(button, 'saving', '⏳ Gravando...');
-    setExpenseFeedback('Enviando despesa para a planilha. Aguarde a confirmação.', 'pending');
+    setExpenseFeedback('Gravando despesa…', 'pending');
     try {
       const result = await call('saveDespesa', params, false);
       if (!result || result.ok === false) throw new Error(result?.msg || 'Gravação não confirmada.');
@@ -150,7 +151,7 @@
       }
       if (typeof resetExpenseExtras === 'function') resetExpenseExtras();
       const elapsed = ((performance.now() - started) / 1000).toFixed(1).replace('.', ',');
-      setExpenseFeedback('✓ DESPESA GRAVADA NA PLANILHA! Campos limpos. Tempo de resposta: ' + elapsed + ' s.', 'success');
+      setExpenseFeedback('✓ Despesa gravada. Campos limpos.', 'success');
       setButtonState(button, 'saved', '✓ Gravado');
       // A ordenação automática concorria com novas gravações; executar apenas por rotina dedicada.
     } catch (error) {

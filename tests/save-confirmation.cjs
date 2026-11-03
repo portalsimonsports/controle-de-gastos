@@ -44,10 +44,10 @@ function setup() {
   await s.click();assert.equal(s.scripts.length,1,'double click must not resend');
   await s.advance(200000);
   assert.equal(s.nodes.saveExpense.disabled,true);assert.equal(s.clears,0);
-  assert.match(s.nodes.cgExpenseSaveFeedback.textContent,/sem confirmação/);
+  assert.match(s.nodes.cgExpenseSaveFeedback.textContent,/aguardando confirmação/);
   await s.reply({ok:true,msg:'Despesa gravada.'});
   assert.equal(s.clears,1);assert.equal(s.nodes.expenseDescription.value,'');
-  assert.match(s.nodes.cgExpenseSaveFeedback.textContent,/DESPESA GRAVADA/);
+  assert.match(s.nodes.cgExpenseSaveFeedback.textContent,/Despesa gravada/);
   assert.equal(s.nodes.saveExpense.textContent,'✓ Gravado');
   assert.equal(s.nodes.saveExpense.disabled,false);assert.equal(s.nodes.clearExpense.disabled,false);
   assert.equal(s.timers.size,0);assert.equal(s.scripts.length,1);
