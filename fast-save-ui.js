@@ -128,7 +128,7 @@
     if (clearButton) clearButton.disabled = true;
     const waitingTimer = setTimeout(function () {
       setButtonState(button, 'saving', '⏳ Gravando…');
-      setExpenseFeedback('Aguardando resposta da planilha. Não é necessário reenviar.', 'pending');
+      setExpenseFeedback('Aguardando resposta.', 'pending');
     }, 15000);
     const uncertainTimer = setTimeout(function () {
       setExpenseFeedback('Ainda aguardando confirmação. Você pode conferir o registro na Consulta.', 'pending');
@@ -157,7 +157,7 @@
     } catch (error) {
       if (error && error.gravacaoIncerta) {
         uncertainExpense = signature;
-        setExpenseFeedback('A conexão terminou sem confirmar a gravação. A compra pode já estar na planilha. Dados preservados: confira na Consulta antes de usar Limpar para iniciar outro lançamento.', 'pending');
+        setExpenseFeedback('A conexão terminou sem confirmar a gravação. A compra pode já ter sido registrada. Dados preservados: confira na Consulta antes de usar Limpar para iniciar outro lançamento.', 'pending');
         setButtonState(button, '', 'Conferir na Consulta');
       } else {
         setExpenseFeedback(String(error?.message || 'Gravação não confirmada.'), 'error');
