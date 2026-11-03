@@ -448,11 +448,26 @@
       return new Promise((resolve, reject) => {
         const callbackName = `__cg_jsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const script = document.createElement('script');
-        const timeout = setTimeout(() => finish(new Error('A API não respondeu.')), 30000);
+        // A demora do navegador não cancela uma escrita no servidor.
+        // Para despesas, conservar o callback até a resposta efetiva.
+        const writingExpense = action === 'saveDespesa';
+        let settled = false;
+        const timeout = writingExpense ? null : setTimeout(() => finish(new Error('A API não respondeu.')), 30000);
         function cleanup() { clearTimeout(timeout); delete window[callbackName]; script.remove(); }
-        function finish(error, data) { cleanup(); if (error) reject(error); else resolve(data); }
+        function finish(error, data) {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          if (error) {
+            if (writingExpense) error.gravacaoIncerta = true;
+            reject(error);
+          } else resolve(data);
+        }
         window[callbackName] = data => finish(null, data);
         script.onerror = () => finish(new Error('Falha de comunicação com o Google Apps Script.'));
+        script.onload = () => {
+          if (!settled) finish(new Error('O servidor não retornou a confirmação.'));
+        };
         script.referrerPolicy = 'no-referrer';
         const query = new URLSearchParams({ action, callback: callbackName, _: String(Date.now()), ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, value ?? ''])) });
         script.src = `${API_URL}?${query.toString()}`;
@@ -1187,3 +1202,4 @@
   </script>
 </body>
 </html>
+

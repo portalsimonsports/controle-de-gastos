@@ -2,6 +2,7 @@
 
 (function () {
   let expenseOrganizeTimer = null;
+  let uncertainExpense = '';
   window.__cgExpenseSaveLock = window.__cgExpenseSaveLock || false;
 
   function setButtonState(button, state, label) {
@@ -51,12 +52,12 @@
   }
 
   function parseExpenseMoney(raw) {
-    const text = String(raw || '').replace(/R\\$/gi, '').replace(/\\s/g, '');
+    const text = String(raw || '').replace(/R\$/gi, '').replace(/\s/g, '');
     if (!text) return NaN;
     const comma = text.lastIndexOf(',');
     const dot = text.lastIndexOf('.');
     let normalized = text;
-    if (comma >= 0 && (comma > dot)) normalized = text.replace(/\\./g, '').replace(',', '.');
+    if (comma >= 0 && (comma > dot)) normalized = text.replace(/\./g, '').replace(',', '.');
     else if (dot >= 0 && comma >= 0) normalized = text.replace(/,/g, '');
     else if (comma >= 0) normalized = text.replace(',', '.');
     const value = Number(normalized);
@@ -88,25 +89,6 @@
     box.style.border = '1px solid ' + (kind === 'error' ? '#ab5364' : kind === 'success' ? '#28865c' : '#496d9a');
   }
 
-  async function inspectExpenseAfterFailure(params) {
-    // Apenas leitura. Nunca reenvia saveDespesa após falha de comunicação.
-    const result = await call('listDespesas', {
-      token: params.token,
-      inicio: params.data,
-      fim: params.data
-    }, false);
-    const rows = Array.isArray(result?.rows) ? result.rows : [];
-    const targetValue = Number(params.valorTotal);
-    const normalize = value => String(value || '').trim().replace(/\\s+/g, ' ').toLocaleUpperCase('pt-BR');
-    const targetName = normalize(params.descricao);
-    return rows.filter(row => {
-      const amount = typeof row.valor === 'number' ? row.valor : parseExpenseMoney(row.valor);
-      return normalize(row.descricao) === targetName
-        && Number.isFinite(amount)
-        && Math.abs(amount - targetValue) < 0.005;
-    }).length;
-  }
-
   async function saveExpenseFast(event) {
     stopOriginal(event);
     const button = element('saveExpense');
@@ -135,7 +117,21 @@
       setExpenseFeedback('Confira o intervalo e a quantidade de repetições.', 'error');
       return;
     }
-    const originalText = button.textContent;
+    const signature = JSON.stringify(params);
+    if (uncertainExpense === signature) {
+      setExpenseFeedback('Esta solicitação ficou sem confirmação. Confira a compra na Consulta antes de iniciar outro lançamento pelo botão Limpar.', 'pending');
+      return;
+    }
+    const clearButton = element('clearExpense');
+    const clearWasDisabled = clearButton ? clearButton.disabled : false;
+    if (clearButton) clearButton.disabled = true;
+    const waitingTimer = setTimeout(function () {
+      setButtonState(button, 'saving', 'Aguardando confirmação...');
+      setExpenseFeedback('A resposta está demorando. A despesa pode já estar gravada; aguarde a confirmação. O sistema não enviará a compra novamente.', 'pending');
+    }, 15000);
+    const uncertainTimer = setTimeout(function () {
+      setExpenseFeedback('Ainda sem confirmação da gravação. Confira na Consulta; esta tela continua aguardando a resposta original, sem reenviar a compra.', 'pending');
+    }, 180000);
     const started = performance.now();
     window.__cgExpenseSaveLock = true;
     button.dataset.saving = '1';
@@ -158,28 +154,23 @@
       setButtonState(button, 'saved', '✓ Gravado');
       // A ordenação automática concorria com novas gravações; executar apenas por rotina dedicada.
     } catch (error) {
-      const errorMessage = String(error?.message || 'Falha de comunicação');
-      setButtonState(button, 'saving', 'Verificando...');
-      setExpenseFeedback('O servidor não confirmou a solicitação. Consultando a planilha sem reenviar a despesa...', 'pending');
-      try {
-        const matches = await inspectExpenseAfterFailure(params);
-        if (matches > 0) {
-          setExpenseFeedback('ATENÇÃO: foi encontrado ' + matches + ' lançamento(s) com a mesma data, descrição e valor. A resposta da gravação falhou; confira o registro na Consulta antes de tentar novamente. Seus campos foram preservados.', 'pending');
-          setButtonState(button, 'save-error', 'Conferir registro');
-        } else {
-          setExpenseFeedback('Gravação não confirmada. A consulta não encontrou registro correspondente; como a execução pode ainda estar terminando, confira novamente antes de reenviar. Dados preservados. ' + errorMessage, 'error');
-          setButtonState(button, 'save-error', 'Não confirmado');
-        }
-      } catch (verificationError) {
-        setExpenseFeedback('Sem confirmação do servidor e sem resposta da consulta. Não tente gravar outra vez antes de conferir na aba Consulta. Dados preservados. ' + errorMessage, 'error');
-        setButtonState(button, 'save-error', 'Conferir planilha');
+      if (error && error.gravacaoIncerta) {
+        uncertainExpense = signature;
+        setExpenseFeedback('A conexão terminou sem confirmar a gravação. A compra pode já estar na planilha. Dados preservados: confira na Consulta antes de usar Limpar para iniciar outro lançamento.', 'pending');
+        setButtonState(button, '', 'Conferir na Consulta');
+      } else {
+        setExpenseFeedback(String(error?.message || 'Gravação não confirmada.'), 'error');
+        setButtonState(button, 'save-error', 'Corrigir dados');
       }
     } finally {
+      clearTimeout(waitingTimer);
+      clearTimeout(uncertainTimer);
       delete button.dataset.saving;
       window.__cgExpenseSaveLock = false;
       button.removeAttribute('aria-busy');
       button.disabled = false;
-      button.textContent = originalText;
+      if (clearButton) clearButton.disabled = clearWasDisabled;
+      // Manter o resultado visível; o próximo clique inicia um novo estado.
     }
   }
 
@@ -335,7 +326,19 @@
   }
 
   function install() {
-    bindCapture('saveExpense', saveExpenseFast);
+    // Capturar no documento ANTES dos módulos antigos: o manipulador
+    // de expense-ptbr.js interceptava o clique antes de chegar ao botão.
+    if (!window.__cgExpenseFeedbackCapture) {
+      window.__cgExpenseFeedbackCapture = true;
+      document.addEventListener('click', function (event) {
+        if (event.target.closest('#saveExpense')) saveExpenseFast(event);
+      }, true);
+    }
+    const clear = element('clearExpense');
+    if (clear && clear.dataset.uncertainResetBound !== '1') {
+      clear.dataset.uncertainResetBound = '1';
+      clear.addEventListener('click', function () { uncertainExpense = ''; });
+    }
     bindCapture('calendarEntrySave', saveCalendarFast);
     bindCapture('juniorSave', saveJuniorFast);
     bindCapture('saveIncome', saveIncomeFast);
@@ -347,3 +350,4 @@
   const observer = new MutationObserver(install);
   observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
+
