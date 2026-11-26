@@ -1,4 +1,4 @@
-const CACHE_NAME = 'controle-gastos-pwa-202611261101';
+const CACHE_NAME = 'controle-gastos-pwa-202611261156';
 const CORE = [
   './',
   './index.html',
