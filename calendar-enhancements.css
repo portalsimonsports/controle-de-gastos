@@ -104,3 +104,5 @@
     min-width: 138px;
   }
 }
+
+@media(max-width:900px){#viewCalendar .calendar-actions-cell{position:sticky;right:0;z-index:2;min-width:148px;background:#0d1c2d}#viewCalendar .calendar-row-actions{display:flex;flex-wrap:nowrap}#viewCalendar .calendar-action-btn{white-space:nowrap}}
