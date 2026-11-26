@@ -88,3 +88,14 @@
     min-width: 780px;
   }
 }
+/* Ações permanecem acessíveis durante a rolagem horizontal no celular. */
+@media (max-width: 900px) {
+  #viewBus table, #viewFidelity table { min-width: 960px; }
+  #viewBus th:last-child, #viewBus td:last-child,
+  #viewFidelity th:last-child, #viewFidelity td:last-child {
+    position: sticky; right: 0; z-index: 2; width: 180px;
+    background: #0d1c2d; box-shadow: -1px 0 0 rgba(160,180,210,.16);
+  }
+  #viewBus .bus-row-actions, #viewFidelity .bus-row-actions { display:flex; flex-wrap:nowrap; justify-content:center; gap:6px; }
+  #viewBus .bus-row-actions button, #viewFidelity .bus-row-actions button { flex:0 0 auto; white-space:nowrap; }
+}
