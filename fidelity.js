@@ -163,9 +163,7 @@
       if (
         canWrite() &&
         result.permiteEdicao !== false &&
-        item.editavel !== false &&
-        item.quantidade !== null &&
-        item.quantidade !== undefined
+        item.editavel !== false
       ) {
         const actions = document.createElement('div');
         actions.className =
@@ -470,10 +468,8 @@
   }
 
   async function saveFidelityEdit() {
-    if (
-      !selectedFidelityUse ||
-      !selectedFidelityUse.linha
-    ) {
+    if (!selectedFidelityUse || !Number.isInteger(Number(selectedFidelityUse.linha)) || Number(selectedFidelityUse.linha) < 2) {
+      toast('Não foi possível identificar a linha do registro. Atualize a lista antes de excluir.', 'error');
       return;
     }
 
