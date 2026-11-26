@@ -136,9 +136,7 @@
       if (
         canWrite() &&
         result.permiteEdicao !== false &&
-        item.editavel !== false &&
-        item.quantidade !== null &&
-        item.quantidade !== undefined
+        item.editavel !== false
       ) {
         const actions = document.createElement('div');
         actions.className = 'bus-row-actions';
@@ -388,7 +386,10 @@
   }
 
   async function saveBusEdit() {
-    if (!selectedUse || !selectedUse.linha) return;
+    if (!selectedUse || !Number.isInteger(Number(selectedUse.linha)) || Number(selectedUse.linha) < 2) {
+      toast('Não foi possível identificar a linha do registro. Atualize a lista antes de excluir.', 'error');
+      return;
+    }
 
     const input = document.getElementById('busEditQuantity');
     const raw = String(input.value || '').trim();
