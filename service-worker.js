@@ -1,8 +1,12 @@
-const CACHE_NAME = 'controle-gastos-pwa-202611261156';
+const CACHE_NAME = 'controle-gastos-pwa-202611261206';
 const CORE = [
   './',
   './index.html',
   './app.html',
+  './calendar-enhancements.js?v=202611261206',
+  './calendar-enhancements.css?v=202611261206',
+  './professional-confirm.js?v=202611261206',
+  './professional-confirm.css?v=202611261206',
   './manifest.webmanifest',
   './icon-192.svg',
   './icon-512.svg'
@@ -40,6 +44,6 @@ self.addEventListener('fetch', event => {
         }
         return response;
       })
-      .catch(() => caches.match(request).then(hit => hit || caches.match('./index.html')))
+      .catch(() => caches.match(request).then(hit => hit || (request.mode === 'navigate' ? caches.match('./index.html') : Response.error())))
   );
 });
