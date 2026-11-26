@@ -1148,7 +1148,7 @@
 
     async function loadCalendar() {
       try {
-        const result = await call('calendarGet', { token: state.token }); $('#calendarTitle').textContent = result.title || 'Calendário';
+        const result = await call('calendarGet', { token: state.token }); if (window.loadCalendar && window.loadCalendar.name === 'enhancedLoadCalendar') return; $('#calendarTitle').textContent = result.title || 'Calendário';
         const head = $('#calendarHead'), body = $('#calendarBody'); head.innerHTML = ''; body.innerHTML = ''; const rows = result.rows || [];
         if (!rows.length) return emptyRow(body, 1);
         const headerRow = document.createElement('tr'); rows[0].forEach(value => { const th = document.createElement('th'); th.textContent = value; headerRow.appendChild(th); }); head.appendChild(headerRow);
