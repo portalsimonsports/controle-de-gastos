@@ -22,7 +22,7 @@
   </style>
 </head>
 <body>
-  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202611261101"></iframe>
+  <iframe id="app" title="Controle de Gastos" src="./app.html?build=202611261156"></iframe>
   <script>
     (function(){
       'use strict';
@@ -33,14 +33,14 @@
       var reloadForRestore=false;
 
       var styles=[
-        'enhancements.css?v=202607142115','calendar-enhancements.css?v=202607142115','professional-confirm.css?v=202610062049',
+        'enhancements.css?v=202607142115','calendar-enhancements.css?v=202611261156','professional-confirm.css?v=202610062049',
         'card-period.css?v=202607142115','fidelity.css?v=202607142115','bus-actions.css?v=202607142115',
         'bilhetes-layout.css?v=202611261101','bilhete-controls.css?v=202607142115','junior-recorrencia.css?v=202607142115',
         'mobile-data-fix.css?v=202607142115','finance-tools.css?v=202609230810','modern-ui-2026.css?v=202610020914'
       ];
       var scripts=[
         'api-timeout-fix.js?v=202607211045','fast-save-ui.js?v=202611030607','enhancements.js?v=202607142115',
-        'query-description.js?v=202608010610','calendar-enhancements.js?v=202607142115','calendar-list-picker.js?v=202608020545',
+        'query-description.js?v=202608010610','calendar-enhancements.js?v=202611261156','calendar-list-picker.js?v=202608020545',
         'professional-confirm.js?v=202610062049','card-period.js?v=202607142115','fidelity.js?v=202611261101',
         'fidelity-save-fix.js?v=202608190530','bus-actions.js?v=202611261101','bilhete-columns.js?v=202607142115',
         'bilhete-controls.js?v=202607142115','junior-recorrencia.js?v=202610200615','expense-ptbr.js?v=202610140610',
@@ -176,7 +176,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./service-worker.js?v=202611261101', { scope: './' }).catch(function () {});
+        navigator.serviceWorker.register('./service-worker.js?v=202611261156', { scope: './' }).catch(function () {});
       });
     }
   </script>
