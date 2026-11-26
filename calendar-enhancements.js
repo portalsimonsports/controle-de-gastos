@@ -390,15 +390,24 @@
   }
 
   async function deleteCalendarEntry(record) {
-    const confirmed = window.confirm(
-      'Excluir este registro do Calendário?\n\n' +
-      record.tipo +
-      '\nData: ' +
-      record.data +
-      '\nLinha: ' +
-      record.linha +
-      '\n\nA linha será esvaziada sem deslocar os demais registros.'
-    );
+    if (!canManageCalendar()) return;
+    if (!Number.isInteger(Number(record.linha)) || Number(record.linha) < 3) {
+      return toast('Registro inválido. Atualize o Calendário.', 'error');
+    }
+    if (typeof window.professionalConfirm !== 'function') {
+      return toast('Confirmação indisponível. Atualize a página.', 'error');
+    }
+    const confirmed = await window.professionalConfirm({
+      title: 'Excluir registro do Calendário?',
+      description: 'Confira o registro selecionado.',
+      details: [
+        {label:'Tipo', value:record.tipo, wide:true},
+        {label:'Data', value:record.data},
+        {label:'Linha', value:record.linha}
+      ],
+      warning:'Somente os dados do registro serão apagados. As fórmulas permanecem.',
+      confirmText:'Excluir registro', cancelText:'Cancelar', variant:'danger'
+    });
 
     if (!confirmed) return;
 
@@ -407,7 +416,9 @@
         'calendarDelete',
         {
           token: state.token,
-          linha: record.linha
+          linha: record.linha,
+          tipoOriginal: record.tipo,
+          dataOriginal: record.data
         },
         false
       );
